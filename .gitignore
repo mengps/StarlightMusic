@@ -1,0 +1,13 @@
+debug/
+release/
+android-build/
+*.user
+*.Debug
+*.Release
+Makefile
+*.stash
+*.rc
+*.exe
+*.qmlc
+*.so-deployment-settings.json
+*.so
