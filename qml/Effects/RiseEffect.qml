@@ -4,13 +4,12 @@ import QtQuick.Particles 2.12
 Item {
     id: root
     property alias system: particleSystem
-    property alias source: particleImage.source;
-    property alias emitRate: particlesEmitter.emitRate;
+    property alias source: particleImage.source
+    property alias emitRate: particlesEmitter.emitRate
 
     ParticleSystem {
         id: particleSystem
         running: true
-        onEmptyChanged: if (empty) particleSystem.stop();
 
         Emitter {
             id: particlesEmitter
@@ -19,7 +18,7 @@ Item {
             system: particleSystem
             size: 12
             sizeVariation: 10
-            endSize: 5
+            endSize: 0
             lifeSpan: 800
             lifeSpanVariation: 1000
             maximumEmitted: 400

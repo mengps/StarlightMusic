@@ -5,8 +5,8 @@ Item {
     id: root
     property alias running: particlesEmitter.enabled
     property alias size: particlesEmitter.endSize
-    property alias source: particleImage.source;
-    property alias emitRate: particlesEmitter.emitRate;
+    property alias source: particleImage.source
+    property alias emitRate: particlesEmitter.emitRate
 
     ParticleSystem {
         id: particleSystem
@@ -30,10 +30,6 @@ Item {
             alpha: 0.4
             alphaVariation: 0.4
             colorVariation: 0.8
-            /*rotation: 90
-            rotationVariation: 60
-            rotationVelocity: 180
-            rotationVelocityVariation: 90*/
         }
     }
 }
