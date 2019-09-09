@@ -1,6 +1,6 @@
 ﻿# StarlightMusic
 
-跨平台的音乐播放器，使用Qt Quick / Qml + FFmpeg开发
+  跨平台音乐播放器，使用Qt Quick / Qml + FFmpeg开发
 
 ------
 ### 安装、配置 
@@ -13,11 +13,11 @@
 
  - StarlightMusic
 
- `StarlightMusic`
+ ```
+   StarlightMusic
+ ```
 ------
 
-开发环境windows 10，Qt 5.13.0
+  开发环境windows 10，Qt 5.13.0
 
 ------
-
-`注意` 仅仅是为了学习FFmpeg而编写，难免有很多不足之处，还望多多指正
