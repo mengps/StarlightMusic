@@ -2,22 +2,9 @@
 #define AUDIODECODER_H
 
 #include <QAudioFormat>
-#include <QMutex>
-#include <QQueue>
 #include <QThread>
 
-struct Packet
-{
-    QByteArray data;
-    qreal time;
-};
-
-class SwrContext;
-class AVFormatContext;
-class AVCodecContext;
-class AVStream;
-class AVPacket;
-class AVFrame;
+class AudioDecoderPrivate;
 class AudioDecoder : public QThread
 {
     Q_OBJECT
@@ -26,44 +13,93 @@ public:
     AudioDecoder(QObject *parent = nullptr);
     ~AudioDecoder();
 
+    /**
+     * @note is thread-safe
+     * @brief 通知解码器停止解码
+     * @warning 可能不会立即停止
+     */
     void stop();
+
+    /**
+     * @note is thread-safe
+     * @param filename 媒体文件名(通常是音乐)
+     */
     void open(const QString &filename);
+
+    /**
+     * @note is thread-safe
+     * @param ratio 进度的比率,在 0.0 ~ 1.0 之间
+     */
     void setProgress(qreal ratio);
 
+    /**
+     * @note is thread-safe
+     * @return 持续时间(总时长)
+     */
     qreal duration();
+
+    /**
+     * @note is thread-safe
+     * @return 标题,如果没有,则为文件名(无后缀)
+     */
     QString title();
-    QString lastError();
+
+    /**
+     * @note is thread-safe
+     * @return 作者,如果没有,则为'未知'
+     */
+    QString author();
+
+    /**
+     * @note is thread-safe
+     * @return 专辑,如果没有,则为'无'
+     */
+    QString album();
+
+    /**
+     * @note is thread-safe
+     * @return 音频的格式
+     */
     QAudioFormat format();
+
+    /**
+     * @note is thread-safe
+     * @warning 必须在currentFrame之后调用
+     * @return 当前音频帧的时间
+     */
     qreal currentTime();
+
+    /**
+     * @note is thread-safe
+     * @return 解码后音频帧
+     */
     QByteArray currentFrame();
 
 signals:
-    void error(const QString &err);
+    /**
+     * @note 当出现错误时发出
+     * @param error 错误信息
+     */
+    void error(const QString &error);
+
+    /**
+     * @note 文件解析完成后发出
+     * @warning 此信号在解复用后 -> 解码前发出
+     */
     void resolved();
+
+    /**
+     * @warning 对于音乐,海报在视频流中,需要通过解码获得
+     *          因此,当解码出海报后以信号形式通知
+     * @param playbill QImage形式的海报
+     */
+    void hasPlaybill(const QImage &playbill);
 
 protected:
     void run();
 
 private:
-    void resolve();
-    void cleanup();
-
-    SwrContext *m_swrContext = nullptr;
-    AVFormatContext *m_formatContext = nullptr;
-    AVCodecContext *m_codecContext = nullptr;
-    AVStream *m_audioStream = nullptr;
-    AVPacket *m_packet = nullptr;
-    AVFrame *m_frame = nullptr;
-    int m_audioIndex = -1;
-
-    qreal m_duration = 0.0;
-    qreal m_currentTime = 0.0;
-    bool m_runnable = true;
-    QAudioFormat m_format;
-    QMutex m_mutex;
-    QString m_title;
-    QString m_filename;
-    QQueue<Packet> m_frameQueue;
+    AudioDecoderPrivate *d = nullptr;
 };
 
 #endif // AUDIODECODER_H

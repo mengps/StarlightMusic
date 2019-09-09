@@ -1,33 +1,50 @@
 #include "audiodecoder.h"
+#include "imageprovider.h"
 #include "musicplayer.h"
 
+#include <QDebug>
 #include <QAudioOutput>
 #include <QTimer>
 #include <QUrl>
-#include <QDebug>
 
 MusicPlayer::MusicPlayer(QObject *parent)
     : QObject (parent)
 {
+    m_playbillProvider = new ImageProvider;
     m_playTimer = new QTimer(this);
     connect(m_playTimer, &QTimer::timeout, this, &MusicPlayer::update);
+
+    /*QThread *thread = new QThread;
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);*/
     m_decoder = new AudioDecoder(this);
     connect(m_decoder, &AudioDecoder::error, this, &MusicPlayer::error);
+    connect(m_decoder, &AudioDecoder::hasPlaybill, this, [this](const QImage &playbill) {
+        m_playbillProvider->setPixmap(playbill);
+        emit playbillChanged();
+    });
     connect(m_decoder, &AudioDecoder::resolved, this, [this]() {
         if (m_running) {
             emit titleChanged();
+            emit authorChanged();
             emit durationChanged();
             m_audioOutput.reset(new QAudioOutput(m_decoder->format()));
+            m_audioOutput->setVolume(m_volume);
             m_audioDevice = m_audioOutput->start();
             m_playTimer->start(100);
         }
     });
+    /*m_decoder->moveToThread(thread);
+    thread->start();*/
 }
 
 MusicPlayer::~MusicPlayer()
 {
     suspend();
-    m_decoder->stop();
+}
+
+ImageProvider *MusicPlayer::imageProvider()
+{
+    return m_playbillProvider;
 }
 
 QUrl MusicPlayer::music() const
@@ -58,6 +75,22 @@ void MusicPlayer::setProgress(qreal ratio)
     }
 }
 
+int MusicPlayer::volume() const
+{
+    return m_volume;
+}
+
+void MusicPlayer::setVolume(int vol)
+{
+    if (vol != m_volume) {
+        m_volume = vol;
+        if (m_audioOutput) {
+            m_audioOutput->setVolume(vol / qreal(100.0));
+        }
+        emit volumeChanged();
+    }
+}
+
 qreal MusicPlayer::duration() const
 {
     return m_decoder->duration();
@@ -73,13 +106,21 @@ QString MusicPlayer::title() const
     return m_decoder->title();
 }
 
+QString MusicPlayer::author() const
+{
+    return m_decoder->author();
+}
+
+QString MusicPlayer::album() const
+{
+    return m_decoder->album();
+}
+
 void MusicPlayer::play(const QUrl &url)
 {
     suspend();
     setMusic(url);
-    if (m_decoder->isRunning()) {
-        m_decoder->stop();
-    }
+    m_decoder->stop();
     m_running = true;
     m_progress = 0.0;
     emit progressChanged();
@@ -101,16 +142,23 @@ void MusicPlayer::resume()
 
 void MusicPlayer::update()
 {
-    if (m_decoder->currentTime() >= m_decoder->duration()) {
-        m_progress = 1.0;
-        m_running = false;
-        m_playTimer->stop();
-        emit finished();
-    } else m_progress = m_decoder->currentTime() / m_decoder->duration();
-    emit progressChanged();
-
     while (m_audioBuffer.size() < m_audioOutput->bytesFree()) {
         QByteArray frame = m_decoder->currentFrame();
+        qreal currentTime = m_decoder->currentTime();
+        qreal duration = m_decoder->duration();
+        if (currentTime >= duration) {
+            m_progress = 1.0;
+            m_running = false;
+            m_decoder->stop();
+            m_playTimer->stop();
+            emit finished();
+            emit progressChanged();
+            break;
+        } else {
+            m_progress = currentTime / duration;
+            emit progressChanged();
+        }
+
         if (frame.isEmpty()) break;
         m_audioBuffer += frame;
     }

@@ -1,3 +1,4 @@
+#include "imageprovider.h"
 #include "musicplayer.h"
 
 #include <QGuiApplication>
@@ -12,6 +13,7 @@ int main(int argc, char *argv[])
     //给它一个parent
     MusicPlayer *musicPlayer = new MusicPlayer(qApp);
     QQmlApplicationEngine engine;
+    engine.addImageProvider("playbill", musicPlayer->imageProvider());
     engine.rootContext()->setContextProperty("musicPlayer", musicPlayer);
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
