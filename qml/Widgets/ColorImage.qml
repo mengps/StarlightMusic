@@ -5,6 +5,8 @@ Item {
     property alias color: rect.color
     property alias source: mask.source
 
+    Component.onCompleted: mask.sourceSize = Qt.size(width, height)
+
     Rectangle {
         id: rect
         anchors.fill: parent
@@ -14,15 +16,14 @@ Item {
     Image {
         id: mask
         anchors.fill: parent
-        sourceSize: Qt.size(parent.width, parent.height)
         fillMode: Image.PreserveAspectFit
-        smooth: true
         mipmap: true
         visible: true
     }
 
     OpacityMask {
         anchors.fill: parent
+        cached: true
         source: rect
         maskSource: mask
     }
