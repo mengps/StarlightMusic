@@ -29,26 +29,6 @@ extern "C"
 
 typedef const char *const_int8ptr;
 
-//         -1               +1
-//   [free space] -> [useable space]
-static const int maxQueueSize = 100;
-static QSemaphore freeSpace(maxQueueSize);
-static QSemaphore useableSpace(0);
-
-static void semaphoreInit()
-{
-    if (useableSpace.available() > 0)
-        useableSpace.acquire(useableSpace.available());
-    if (freeSpace.available() < maxQueueSize)
-        freeSpace.release(maxQueueSize - freeSpace.available());
-}
-
-typedef struct Packet
-{
-    QByteArray data;
-    qreal time;
-} Packet;
-
 class AudioDecoderPrivate
 {
 public:
@@ -62,19 +42,32 @@ public:
     AVFrame *m_frame = nullptr;
     int m_audioIndex = -1, m_videoIndex = -1;
 
-    qreal m_duration = 0.0;
-    qreal m_currentTime = 0.0;
-    QAudioFormat m_format;
     QMutex m_mutex;
+    QQueue<AudioPacket> m_frameQueue;
+    QAudioFormat m_format;
+    qreal m_duration = 0.0;
     QString m_title = QString();
-    QString m_author = QString();
+    QString m_singer = QString();
     QString m_album = QString();
     QImage m_playbill = QImage();
     QString m_filename = QString();
-    QQueue<Packet> m_frameQueue;
     QString m_lastError = QString();
     bool m_runnable = true;
     char paddingByte[7];    //填充7字节,去除警告
+
+    //         -1               +1
+    //   [free space] -> [useable space]
+    static const int maxQueueSize = 100;
+    QSemaphore m_freeSpace{ maxQueueSize };
+    QSemaphore m_useableSpace{ 0 };
+
+
+    void semaphoreInit()
+    {
+        m_useableSpace.acquire(m_useableSpace.available());
+        m_frameQueue.clear();
+        m_freeSpace.release(maxQueueSize - m_freeSpace.available());
+    }
 
     bool openCodecContext(AVMediaType type, AVCodecContext * &codecCtx, int *stream_index);
 
@@ -88,7 +81,6 @@ bool AudioDecoderPrivate::resolve()
     //打开输入文件，并分配格式上下文
     avformat_open_input(&m_formatContext, m_filename.toStdString().c_str(), nullptr, nullptr);
     avformat_find_stream_info(m_formatContext, nullptr);
-
 
     if (!openCodecContext(AVMEDIA_TYPE_AUDIO, m_audioCodecContext, &m_audioIndex))
         return false;
@@ -116,7 +108,7 @@ bool AudioDecoderPrivate::resolve()
     AVDictionaryEntry *artist = av_dict_get(m_formatContext->metadata, "artist", nullptr, AV_DICT_MATCH_CASE);
     AVDictionaryEntry *album = av_dict_get(m_formatContext->metadata, "album", nullptr, AV_DICT_MATCH_CASE);
     if (album) m_album = album->value;
-    if (artist) m_author = artist->value;
+    if (artist) m_singer = artist->value;
     if (title) m_title = title->value;
     else m_title = QFileInfo(m_filename).baseName();
 
@@ -139,13 +131,11 @@ void AudioDecoderPrivate::cleanup()
     m_audioIndex = m_videoIndex = -1;
     m_audioStream = m_videoStream = nullptr;
     m_title.clear();
-    m_author = QString("未知");
+    m_singer = QString("未知");
     m_album =  QString("无");
     m_playbill = QImage();
     m_duration = 0.0;
-    m_currentTime = 0.0;
     m_runnable = true;
-    m_frameQueue.clear();
     m_lastError.clear();
 
     if (m_frame) av_frame_free(&m_frame);
@@ -171,9 +161,8 @@ AudioDecoder::~AudioDecoder()
 void AudioDecoder::stop()
 {
     //必须先重置信号量
-    semaphoreInit();
+    d->semaphoreInit();
     d->m_mutex.lock();
-    d->m_frameQueue.clear();
     d->m_runnable = false;
     d->m_mutex.unlock();
     wait();
@@ -185,25 +174,24 @@ void AudioDecoder::open(const QString &filename)
     d->m_mutex.lock();
     d->m_filename = filename;
     d->cleanup();
-    if (!d->resolve())
-        emit error(d->m_lastError);
+    bool success = d->resolve();
     d->m_mutex.unlock();
+    if (!success) emit error(d->m_lastError);
     emit resolved();
     start();
 }
 
 void AudioDecoder::setProgress(qreal ratio)
 {
-    //@warnning 因为有maxQueueSize控制缓冲,因此会出现这种情况
-    //解码结束但播放未结束,需要重新启动解码线程
-    if (!isRunning()) start();
     d->m_mutex.lock();
     qreal seconds = ratio * d->m_duration;
-    d->m_currentTime = seconds;
     av_seek_frame(d->m_formatContext, d->m_audioIndex, int64_t(seconds * d->m_audioStream->time_base.den), AVSEEK_FLAG_ANY);
     d->m_frameQueue.clear();
     d->m_mutex.unlock();
-    semaphoreInit();
+    d->semaphoreInit();
+    //@warnning 因为有maxQueueSize控制缓冲,因此会出现这种情况
+    //解码结束但播放未结束,需要重新启动解码线程
+    if (!isRunning()) start();
 }
 
 QAudioFormat AudioDecoder::format()
@@ -224,47 +212,34 @@ QString AudioDecoder::title()
     return d->m_title;
 }
 
-QString AudioDecoder::author()
+QString AudioDecoder::singer()
 {
     QMutexLocker locker(&d->m_mutex);
-    return d->m_author;
+    return d->m_singer;
 }
 
 QString AudioDecoder::album()
 {
     QMutexLocker locker(&d->m_mutex);
-    return d->m_author;
+    return d->m_album;
 }
 
-qreal AudioDecoder::currentTime()
+AudioPacket AudioDecoder::currentPacket()
 {
-    QMutexLocker locker(&d->m_mutex);
-    return d->m_currentTime;
-}
+    qDebug() << "1";
+    AudioPacket packet;
+    d->m_useableSpace.acquire();
+    packet = d->m_frameQueue.dequeue();
+    d->m_freeSpace.release();
+    qDebug() << "2";
 
-QByteArray AudioDecoder::currentFrame()
-{
-    useableSpace.acquire();
-    Packet packet = d->m_frameQueue.dequeue();
-    QByteArray data = QByteArray();
-    data += packet.data;
-    d->m_currentTime = packet.time;
-    freeSpace.release();
-
-    return data;
+    return packet;
 }
 
 void AudioDecoder::run()
 {
     //读取下一帧
-    while (1) {
-        d->m_mutex.lock();
-        bool runnalbe = d->m_runnable;
-        d->m_mutex.unlock();
-
-        if (!runnalbe) break;
-
-        if (av_read_frame(d->m_formatContext, d->m_packet) < 0) break;
+    while (d->m_runnable && (av_read_frame(d->m_formatContext, d->m_packet) >= 0)) {
 
         if (d->m_packet->stream_index == d->m_audioIndex) {
             //发送给解码器
@@ -286,10 +261,10 @@ void AudioDecoder::run()
 
                 qreal time = d->m_frame->pts * av_q2d(d->m_audioStream->time_base) + d->m_frame->pkt_duration * av_q2d(d->m_audioStream->time_base);
 
-                freeSpace.acquire();
+                d->m_freeSpace.acquire();
                 d->m_frameQueue.enqueue({ data, time });
                 //相当于useableSpace.release();
-                QSemaphoreReleaser releaser(useableSpace);
+                QSemaphoreReleaser releaser(d->m_useableSpace);
 
                 av_frame_unref(d->m_frame);
             }
@@ -355,7 +330,7 @@ bool AudioDecoderPrivate::openCodecContext(AVMediaType type, AVCodecContext * &c
 
         int ret = avcodec_parameters_to_context(codecCtx, stream->codecpar);
         if (ret < 0) {
-            m_lastError = QString("无法将％1编解码器参数复制到解码器上下文").arg(typeStr);
+            m_lastError = QString("无法将%1编解码器参数复制到解码器上下文").arg(typeStr);
             return false;
         }
 

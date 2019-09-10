@@ -4,6 +4,12 @@
 #include <QAudioFormat>
 #include <QThread>
 
+typedef struct AudioPacket
+{
+    QByteArray data;
+    qreal time;
+} AudioPacket;
+
 class AudioDecoderPrivate;
 class AudioDecoder : public QThread
 {
@@ -46,9 +52,9 @@ public:
 
     /**
      * @note is thread-safe
-     * @return 作者,如果没有,则为'未知'
+     * @return 歌手,如果没有,则为'未知'
      */
-    QString author();
+    QString singer();
 
     /**
      * @note is thread-safe
@@ -64,16 +70,9 @@ public:
 
     /**
      * @note is thread-safe
-     * @warning 必须在currentFrame之后调用
-     * @return 当前音频帧的时间
+     * @return 解码后的音频包{data + time}
      */
-    qreal currentTime();
-
-    /**
-     * @note is thread-safe
-     * @return 解码后音频帧
-     */
-    QByteArray currentFrame();
+    AudioPacket currentPacket();
 
 signals:
     /**
