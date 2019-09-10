@@ -9,7 +9,7 @@ Item {
 
     function run(direction) {
         if (direction) {
-            let diff = text.implicitWidth - root.width;
+            let diff = text.implicitWidth - width;
             animation.to = -diff;
             animation.restart();
         } else {
