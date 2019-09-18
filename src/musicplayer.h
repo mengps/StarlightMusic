@@ -1,6 +1,9 @@
 #ifndef MUSICPLAYER_H
 #define MUSICPLAYER_H
 
+#include "lrcdecoder.h"
+#include "lyricsmodel.h"
+
 #include <QObject>
 #include <QUrl>
 
@@ -18,7 +21,10 @@ class MusicPlayer : public QObject
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
-    Q_PROPERTY(QString author READ author NOTIFY authorChanged)
+    Q_PROPERTY(QString singer READ singer NOTIFY singerChanged)
+    Q_PROPERTY(QString album READ album NOTIFY albumChanged)
+    Q_PROPERTY(LyricsModel* lyrics READ lyrics NOTIFY lyricsChanged)
+    Q_PROPERTY(int lyricIndex READ lyricIndex NOTIFY lyricIndexChanged)
     Q_PROPERTY(bool running READ running CONSTANT)
 
 public:
@@ -40,8 +46,11 @@ public:
     bool running() const;
 
     QString title() const;
-    QString author() const;
+    QString singer() const;
     QString album() const;
+    int lyricIndex() const;
+
+    LyricsModel* lyrics() const;
 
     /** @note 开始播放 */
     Q_INVOKABLE void play(const QUrl &url);
@@ -59,24 +68,37 @@ signals:
     void volumeChanged();
     void durationChanged();
     void titleChanged();
-    void authorChanged();
+    void singerChanged();
+    void albumChanged();
+    void lyricsChanged();
+    void lyricIndexChanged();
     void playbillChanged();
 
 private slots:
     void update();
 
 private:
-    ImageProvider *m_playbillProvider;
-
     bool m_running = false;
     QUrl m_music = QUrl();
     qreal m_progress = 0.0;
+    qreal m_duration = 0.0;
     int m_volume = 100;
+    QString m_title = QString();
+    QString m_singer = QString();
+    QString m_album = QString();
     QByteArray m_audioBuffer = QByteArray();
     QTimer *m_playTimer = nullptr;
     QScopedPointer<QAudioOutput> m_audioOutput;
     QIODevice *m_audioDevice = nullptr;
     AudioDecoder *m_decoder = nullptr;
+
+    bool m_hasLyrics = false;
+    QScopedPointer<LrcDecoder> m_lrcDecoder;
+    LyricsModel *m_lyricsModel = nullptr;
+    int m_lyricIndex = 0;
+    int m_nextIndex = 0;
+
+    ImageProvider *m_playbillProvider;
 };
 
 #endif // MUSICPLAYER_H
