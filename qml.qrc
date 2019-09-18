@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/ProgressControlBar.qml</file>
+        <file>qml/Effects/RiseEffect.qml</file>
+        <file>qml/Effects/RippleEffect.qml</file>
+        <file>qml/Widgets/ColorImage.qml</file>
+        <file>qml/Api/Api.js</file>
+        <file>qml/Widgets/ToolTip.qml</file>
+        <file>qml/Widgets/ProgressBar.qml</file>
+        <file>qml/Widgets/Button.qml</file>
+        <file>qml/Widgets/FlowText.qml</file>
+        <file>qml/DetailPanel/DetailPanel.qml</file>
+        <file>qml/MenuPanel/MenuPanel.qml</file>
+        <file>qml/MenuPanel/MenuButton.qml</file>
+        <file>qml/Widgets/BlurImage.qml</file>
+    </qresource>
+</RCC>

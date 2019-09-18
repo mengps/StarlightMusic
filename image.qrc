@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/">
+        <file>image/music.png</file>
+        <file>image/handle.png</file>
+        <file>image/background.jpg</file>
+        <file>image/ParticleImage/star.png</file>
+        <file>image/ParticleImage/circle.png</file>
+        <file>image/Player/play.png</file>
+        <file>image/Player/pause.png</file>
+        <file>image/Player/next.png</file>
+        <file>image/Player/prev.png</file>
+        <file>image/Player/volume.png</file>
+        <file>image/Player/mute.png</file>
+        <file>image/Player/expand.png</file>
+        <file>image/Player/shrink.png</file>
+        <file>image/Player/close.png</file>
+        <file>image/Player/open.png</file>
+        <file>image/Player/content.png</file>
+        <file>image/Player/history.png</file>
+        <file>image/Player/skin.png</file>
+    </qresource>
+</RCC>
