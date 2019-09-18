@@ -6,6 +6,12 @@
 
 ---
 
+### 效果预览
+
+![Image text](preview/preview.gif) 
+
+---
+
 ### 安装、配置 
 
  - 下载 Qt [Qt官网](https://www.qt.io/)

@@ -33,6 +33,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 HEADERS += \
     src/audiodecoder.h \
     src/bufferqueue.h \
+    src/framelesswindow.h \
     src/imageprovider.h \
     src/lrcdecoder.h \
     src/lyricsmodel.h \
@@ -40,6 +41,7 @@ HEADERS += \
 
 SOURCES += \
     src/audiodecoder.cpp \
+    src/framelesswindow.cpp \
     src/imageprovider.cpp \
     src/lrcdecoder.cpp \
     src/lyricsmodel.cpp \
