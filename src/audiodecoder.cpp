@@ -1,11 +1,11 @@
 #include "audiodecoder.h"
+#include "bufferqueue.h"
 
 #include <QDebug>
 #include <QFileInfo>
 #include <QImage>
 #include <QMutex>
 #include <QQueue>
-#include <QSemaphore>
 
 extern "C"
 {
@@ -34,16 +34,7 @@ class AudioDecoderPrivate
 public:
     AudioDecoderPrivate() { }
 
-    SwrContext *m_swrContext = nullptr;
-    AVFormatContext *m_formatContext = nullptr;
-    AVCodecContext *m_audioCodecContext = nullptr, *m_videoCodecContext = nullptr;
-    AVStream *m_audioStream = nullptr, *m_videoStream = nullptr;
-    AVPacket *m_packet = nullptr;
-    AVFrame *m_frame = nullptr;
-    int m_audioIndex = -1, m_videoIndex = -1;
-
     QMutex m_mutex;
-    QQueue<AudioPacket> m_frameQueue;
     QAudioFormat m_format;
     qreal m_duration = 0.0;
     QString m_title = QString();
@@ -52,24 +43,43 @@ public:
     QImage m_playbill = QImage();
     QString m_filename = QString();
     QString m_lastError = QString();
+
+    SwrContext *m_swrContext = nullptr;
+    AVFormatContext *m_formatContext = nullptr;
+    AVCodecContext *m_audioCodecContext = nullptr;
+    AVCodecContext *m_videoCodecContext = nullptr;
+    AVStream *m_audioStream = nullptr;
+    AVStream *m_videoStream = nullptr;
+    AVPacket *m_packet = nullptr;
+    AVFrame *m_frame = nullptr;
+    int m_audioIndex = -1;
+    int m_videoIndex = -1;
     bool m_runnable = true;
-    char paddingByte[7];    //填充7字节,去除警告
 
-    //         -1               +1
-    //   [free space] -> [useable space]
-    static const int maxQueueSize = 100;
-    QSemaphore m_freeSpace{ maxQueueSize };
-    QSemaphore m_useableSpace{ 0 };
+    //填充3字节,去除警告
+    char paddingByte[7];
 
+    //缓冲队列
+    BufferQueue<AudioPacket> m_bufferQueue;
 
-    void semaphoreInit()
+    bool openCodecContext(AVMediaType type, AVFormatContext *&formatCtx, AVCodecContext * &codecCtx, int *stream_index);
+
+    AVSampleFormat converSampleFormat(QAudioFormat::SampleType format)
     {
-        m_useableSpace.acquire(m_useableSpace.available());
-        m_frameQueue.clear();
-        m_freeSpace.release(maxQueueSize - m_freeSpace.available());
-    }
+        AVSampleFormat type;
+        switch (format) {
+            case QAudioFormat::Float:
+            type = AV_SAMPLE_FMT_FLT;
+            break;
 
-    bool openCodecContext(AVMediaType type, AVCodecContext * &codecCtx, int *stream_index);
+            default:
+            case QAudioFormat::SignedInt:
+            type = AV_SAMPLE_FMT_S32;
+            break;
+        }
+
+        return type;
+    }
 
     bool resolve();
     void cleanup();
@@ -78,29 +88,39 @@ public:
 
 bool AudioDecoderPrivate::resolve()
 {
-    //打开输入文件，并分配格式上下文
+    //打开输入文件,并分配格式上下文
     avformat_open_input(&m_formatContext, m_filename.toStdString().c_str(), nullptr, nullptr);
+
+    if (!m_formatContext) {
+        m_lastError = "未知的音乐格式.";
+        return false;
+    }
+
     avformat_find_stream_info(m_formatContext, nullptr);
 
-    if (!openCodecContext(AVMEDIA_TYPE_AUDIO, m_audioCodecContext, &m_audioIndex))
+    if (!openCodecContext(AVMEDIA_TYPE_AUDIO, m_formatContext, m_audioCodecContext, &m_audioIndex))
         return false;
 
-    if (!openCodecContext(AVMEDIA_TYPE_VIDEO, m_videoCodecContext, &m_videoIndex))
-        return false;
+    if (!openCodecContext(AVMEDIA_TYPE_VIDEO, m_formatContext, m_videoCodecContext, &m_videoIndex))
+        m_lastError = "无法找到或解析海报.";
 
     m_audioStream = m_formatContext->streams[m_audioIndex];
     m_videoStream = m_formatContext->streams[m_videoIndex];
 
     //打印相关信息
-    av_dump_format(m_formatContext, 0, "format", 0);
-    fflush(stderr);
+    av_dump_format(m_formatContext, 0, "audio", 0);
 
     QAudioFormat format;
     format.setCodec("audio/pcm");
     format.setSampleRate(m_audioCodecContext->sample_rate);
-    format.setSampleType(QAudioFormat::SignedInt);
-    format.setSampleSize(8 * av_get_bytes_per_sample(AV_SAMPLE_FMT_S32));
     format.setChannelCount(m_audioCodecContext->channels);
+    if (m_audioCodecContext->sample_fmt == AV_SAMPLE_FMT_FLT) {
+        format.setSampleType(QAudioFormat::Float);
+        format.setSampleSize(8 * av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT));
+    }else {
+        format.setSampleType(QAudioFormat::SignedInt);
+        format.setSampleSize(8 * av_get_bytes_per_sample(AV_SAMPLE_FMT_S32));
+    }
     m_format = format;
     m_duration = m_audioStream->duration * av_q2d(m_audioStream->time_base);
 
@@ -112,7 +132,7 @@ bool AudioDecoderPrivate::resolve()
     if (title) m_title = title->value;
     else m_title = QFileInfo(m_filename).baseName();
 
-    m_swrContext = swr_alloc_set_opts(nullptr, int64_t(m_audioCodecContext->channel_layout), AV_SAMPLE_FMT_S32,
+    m_swrContext = swr_alloc_set_opts(nullptr, int64_t(m_audioCodecContext->channel_layout), converSampleFormat(m_format.sampleType()),
                                       m_audioCodecContext->sample_rate, int64_t(m_audioCodecContext->channel_layout),
                                       m_audioCodecContext->sample_fmt, m_audioCodecContext->sample_rate, 0, nullptr);
     swr_init(m_swrContext);
@@ -155,41 +175,45 @@ AudioDecoder::AudioDecoder(QObject *parent)
 AudioDecoder::~AudioDecoder()
 {
     stop();
+    d->cleanup();
     delete d;
 }
 
 void AudioDecoder::stop()
 {
     //必须先重置信号量
-    d->semaphoreInit();
-    d->m_mutex.lock();
+    d->m_bufferQueue.init();
     d->m_runnable = false;
-    d->m_mutex.unlock();
     wait();
 }
 
 void AudioDecoder::open(const QString &filename)
 {
     stop();
+
     d->m_mutex.lock();
     d->m_filename = filename;
     d->cleanup();
     bool success = d->resolve();
     d->m_mutex.unlock();
-    if (!success) emit error(d->m_lastError);
-    emit resolved();
-    start();
+
+    if (!success) {
+        emit error(d->m_lastError);
+        return;
+    } else {
+        start();
+        emit resolved();
+    }
 }
 
 void AudioDecoder::setProgress(qreal ratio)
 {
     d->m_mutex.lock();
     qreal seconds = ratio * d->m_duration;
-    av_seek_frame(d->m_formatContext, d->m_audioIndex, int64_t(seconds * d->m_audioStream->time_base.den), AVSEEK_FLAG_ANY);
-    d->m_frameQueue.clear();
+    av_seek_frame(d->m_formatContext, d->m_audioIndex, int64_t(seconds * d->m_audioStream->time_base.den), AVSEEK_FLAG_BACKWARD);
     d->m_mutex.unlock();
-    d->semaphoreInit();
-    //@warnning 因为有maxQueueSize控制缓冲,因此会出现这种情况
+    d->m_bufferQueue.init();
+    //@warning 因为有maxQueueSize控制缓冲,因此会出现这种情况
     //解码结束但播放未结束,需要重新启动解码线程
     if (!isRunning()) start();
 }
@@ -226,12 +250,9 @@ QString AudioDecoder::album()
 
 AudioPacket AudioDecoder::currentPacket()
 {
-    qDebug() << "1";
     AudioPacket packet;
-    d->m_useableSpace.acquire();
-    packet = d->m_frameQueue.dequeue();
-    d->m_freeSpace.release();
-    qDebug() << "2";
+    //可以考虑用tryDequeue()代替
+    packet = d->m_bufferQueue.tryDequeue();
 
     return packet;
 }
@@ -239,6 +260,7 @@ AudioPacket AudioDecoder::currentPacket()
 void AudioDecoder::run()
 {
     //读取下一帧
+    AVSampleFormat fmt = d->converSampleFormat(d->m_format.sampleType());
     while (d->m_runnable && (av_read_frame(d->m_formatContext, d->m_packet) >= 0)) {
 
         if (d->m_packet->stream_index == d->m_audioIndex) {
@@ -253,7 +275,7 @@ void AudioDecoder::run()
                 if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
                 else if (ret < 0) return;
 
-                int size = av_samples_get_buffer_size(nullptr, d->m_frame->channels, d->m_frame->nb_samples, AV_SAMPLE_FMT_S32, 0);
+                int size = av_samples_get_buffer_size(nullptr, d->m_frame->channels, d->m_frame->nb_samples, fmt, 0);
                 uint8_t *buf = new uint8_t[size];
                 swr_convert(d->m_swrContext, &buf, d->m_frame->nb_samples, const_cast<const uint8_t**>(d->m_frame->data), d->m_frame->nb_samples);
                 data += QByteArray(const_int8ptr(buf), size);
@@ -261,10 +283,7 @@ void AudioDecoder::run()
 
                 qreal time = d->m_frame->pts * av_q2d(d->m_audioStream->time_base) + d->m_frame->pkt_duration * av_q2d(d->m_audioStream->time_base);
 
-                d->m_freeSpace.acquire();
-                d->m_frameQueue.enqueue({ data, time });
-                //相当于useableSpace.release();
-                QSemaphoreReleaser releaser(d->m_useableSpace);
+                d->m_bufferQueue.enqueue({ data, time });
 
                 av_frame_unref(d->m_frame);
             }
@@ -286,10 +305,12 @@ void AudioDecoder::run()
                 av_image_alloc(dst_data, dst_linesize, d->m_frame->width, d->m_frame->height, AV_PIX_FMT_RGB24, 1);
                 sws_scale(swsContext, d->m_frame->data, d->m_frame->linesize, 0, d->m_frame->height, dst_data, dst_linesize);
 
+                //注意后面的copy(),dst_data[0]释放后image也无效了,因此必须拷贝一份
                 QImage image = QImage(dst_data[0], d->m_frame->width,d-> m_frame->height, dst_linesize[0], QImage::Format_RGB888).copy();
                 av_freep(&dst_data[0]);
                 sws_freeContext(swsContext);
 
+                //m_playbill只在内部使用
                 d->m_playbill = image;
                 emit hasPlaybill(image);
 
@@ -301,10 +322,10 @@ void AudioDecoder::run()
     }
 }
 
-bool AudioDecoderPrivate::openCodecContext(AVMediaType type, AVCodecContext * &codecCtx, int *stream_index)
+bool AudioDecoderPrivate::openCodecContext(AVMediaType type, AVFormatContext * &formatCtx, AVCodecContext * &codecCtx, int *stream_index)
 {
-    //找到视频流的索引
-    int ret = av_find_best_stream(m_formatContext, type, -1, -1, nullptr, 0);
+    //找到流的索引
+    int ret = av_find_best_stream(formatCtx, type, -1, -1, nullptr, 0);
     const char *typeStr = av_get_media_type_string(type);
 
     if (ret < 0) {
@@ -312,7 +333,7 @@ bool AudioDecoderPrivate::openCodecContext(AVMediaType type, AVCodecContext * &c
         return false;
     }  else {
         *stream_index = ret;
-        AVStream *stream = m_formatContext->streams[ret];
+        AVStream *stream = formatCtx->streams[ret];
         AVCodec *decoder = nullptr;
 
         if (stream) decoder = avcodec_find_decoder(stream->codecpar->codec_id);
