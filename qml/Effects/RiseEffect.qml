@@ -13,14 +13,15 @@ Item {
 
         Emitter {
             id: particlesEmitter
+            enabled: true
             height: root.height
             width: root.width
             system: particleSystem
-            size: 12
-            sizeVariation: 10
+            size: 14
+            sizeVariation: 8
             endSize: 0
-            lifeSpan: 800
-            lifeSpanVariation: 1000
+            lifeSpan: 1300
+            lifeSpanVariation: 800
             maximumEmitted: 400
             velocity: AngleDirection {
                 angle: -90
@@ -28,11 +29,10 @@ Item {
                 magnitude: 40
                 magnitudeVariation: 40
             }
-        }
-
-        Gravity {
-            angle: -90
-            magnitude: 120
+            acceleration: AngleDirection {
+                angle: -90
+                magnitude: 120
+            }
         }
 
         ImageParticle {
