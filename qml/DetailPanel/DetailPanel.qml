@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import an.lyrics 1.0
 import "../Widgets" as Widgets
 
 Rectangle {
@@ -116,5 +117,54 @@ Rectangle {
         verticalAlignment: Text.AlignVCenter
         font.bold: true
         font.pointSize: 11
+    }
+
+    Component {
+        id: delegate
+
+        Rectangle {
+            width: lyricsView.width
+            height: 30
+            color: "#00FFFFFF"
+
+            Text {
+                text: lyric
+                font.bold: lyricsView.currentIndex == index ? true : false
+                font.pointSize: lyricsView.currentIndex == index ? 12 : 10
+                color: lyricsView.currentIndex == index ? title.color : Qt.darker(title.color, 1.8)
+                anchors.centerIn: parent
+            }
+        }
+    }
+
+    ListView {
+        id: lyricsView
+        model: musicPlayer.lyrics.model
+        clip: true
+        width: 400
+        topMargin: 80
+        spacing: 5
+        bottomMargin: 150
+        contentY: currentIndex * 35 - 80
+        anchors.horizontalCenter: singer.horizontalCenter
+        anchors.top: album.bottom
+        anchors.topMargin: 30
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 110
+        delegate: delegate
+        currentIndex: musicPlayer.lyricIndex
+        highlight: Rectangle{
+            height: 30
+            color: "pink"
+            width: lyricsView.width
+            opacity: 0.1
+            radius: 15
+            Behavior on y {
+                NumberAnimation {
+                    duration: 600
+                }
+            }
+        }
+        highlightFollowsCurrentItem: true
     }
 }
