@@ -17,7 +17,7 @@ Item {
         id: mask
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
-        mipmap: true
+        smooth: true
         visible: true
     }
 
