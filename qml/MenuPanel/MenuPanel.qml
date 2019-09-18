@@ -4,23 +4,28 @@ import "../Widgets" as Widgets
 Item {
     id: root
 
-    property bool isVisible: false
+    property bool isVisible: true
+    property bool menuVisible: false
     property real menuWidth: 45
     property real menuHeight: 50
     property color menuColor: "#fff"
-    property alias backX: menuBack.width
+    property alias back: menuBack
 
-    onIsVisibleChanged: if(!isVisible) content.hide();
+    onMenuVisibleChanged: {
+        if(!menuVisible) {
+            content.hide();
+        }
+    }
 
     function display() {
-        isVisible = true;
+        menuVisible = true;
         animation.index = 0;
         animation.isHide = false;
         animation.start();
     }
 
     function hide() {
-        isVisible = false;
+        menuVisible = false;
         animation.index = 6;
         animation.isHide = true;
         animation.start();
@@ -45,7 +50,7 @@ Item {
                 }
             } else {
                 switch (--index) {
-                    case 0: if (openButton.needVisible) {
+                    case 0: if (root.isVisible && openButton.needVisible) {
                             openButton.needVisible = false;
                             openButton.visible = true;
                         } break;
@@ -55,8 +60,7 @@ Item {
                     case 4: to = 0; target = historyMenu; start(); break;
                     case 5: if (!openButton.needVisible) {
                             openButton.visible = false;
-                        }
-                        to = 0; target = skinMenu; start(); break;
+                        } to = 0; target = skinMenu; start(); break;
                     default: break;
                 }
             }
@@ -80,7 +84,7 @@ Item {
         height: 30
         source: "qrc:/image/Player/open.png"
         toolTip: qsTr("打开菜单")
-        property bool needVisible: root.isVisible
+        property bool needVisible: false
         onClicked: {
             visible = false;
             root.display();
@@ -89,7 +93,6 @@ Item {
 
     MenuButton {
         id: closeMenu
-        clip: true
         source: "qrc:/image/Player/close.png"
         color: "#aaaaaaaa"
         imageColor: root.menuColor
@@ -99,8 +102,10 @@ Item {
         anchors.topMargin: 100
         toolTip: qsTr("关闭菜单")
         onClicked: {
-            openButton.needVisible = true;
             root.hide();
+            if (root.isVisible) {
+                openButton.needVisible = true;
+            }
         }
     }
 
@@ -109,13 +114,15 @@ Item {
         anchors.left: menuBack.right
         width: 0
         height: root.height
-        color: "#bbaaaaaa"
+        color: "#aaaaaaaa"
         property bool isVisible: false
 
         function display() {
-            isVisible = true;
-            contentAnimation.to = root.width - root.menuWidth;
-            contentAnimation.restart();
+            if (root.isVisible) {
+                isVisible = true;
+                contentAnimation.to = root.width - root.menuWidth;
+                contentAnimation.restart();
+            }
         }
         function hide() {
             isVisible = false;
@@ -133,7 +140,6 @@ Item {
 
     MenuButton {
         id: listMenu
-        clip: true
         source: "qrc:/image/Player/content.png"
         color: "#aaaaaaaa"
         imageColor: root.menuColor
@@ -152,7 +158,6 @@ Item {
 
     MenuButton {
         id: historyMenu
-        clip: true
         source: "qrc:/image/Player/history.png"
         color: "#aaaaaaaa"
         imageColor: root.menuColor
@@ -164,7 +169,6 @@ Item {
 
     MenuButton {
         id: skinMenu
-        clip: true
         source: "qrc:/image/Player/skin.png"
         color: "#aaaaaaaa"
         imageColor: root.menuColor

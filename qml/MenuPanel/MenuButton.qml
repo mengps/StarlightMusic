@@ -4,7 +4,6 @@ import "../Widgets" as Widgets
 Item {
     id: root
     clip: true
-
     property color color: "white"
     property bool hovered: false
     property alias toolTip: toolTip.text
@@ -34,6 +33,7 @@ Item {
     }
 
     MouseArea {
+        id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
         onClicked: root.clicked();
