@@ -7,7 +7,7 @@
 template <class T> class BufferQueue
 {
 public:
-    BufferQueue(int bufferSize = 100) {
+    BufferQueue(int bufferSize = 30) {
         setBufferSize(bufferSize);
     }
 
@@ -25,7 +25,7 @@ public:
     }
 
     void enqueue(const T &element) {
-#ifndef QT_NO_DEBUG_OUTPUT
+#ifndef NO_BUFFER_OUTPUT
         qDebug() << "[freespace " << m_freeSpace->available()
                  << "] --- [useablespace " << m_useableSpace->available() << "]";
 #endif
@@ -35,7 +35,7 @@ public:
     }
 
     T dequeue() {
-#ifndef QT_NO_DEBUG_OUTPUT
+#ifndef NO_BUFFER_OUTPUT
         qDebug() << "[freespace " << m_freeSpace->available()
                  << "] --- [useablespace " << m_useableSpace->available() << "]";
 #endif
