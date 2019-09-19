@@ -56,7 +56,7 @@ public:
     int m_videoIndex = -1;
     bool m_runnable = true;
 
-    //填充3字节,去除警告
+    //填充字节,去除警告
     char paddingByte[7];
 
     //缓冲队列
@@ -105,10 +105,10 @@ bool AudioDecoderPrivate::resolve()
         m_lastError = "无法找到或解析海报.";
 
     m_audioStream = m_formatContext->streams[m_audioIndex];
-    m_videoStream = m_formatContext->streams[m_videoIndex];
+    if (m_videoIndex != -1) m_videoStream = m_formatContext->streams[m_videoIndex];
 
     //打印相关信息
-    av_dump_format(m_formatContext, 0, "audio", 0);
+    av_dump_format(m_formatContext, 0, "format_information", 0);
 
     QAudioFormat format;
     format.setCodec("audio/pcm");
@@ -213,7 +213,7 @@ void AudioDecoder::setProgress(qreal ratio)
     av_seek_frame(d->m_formatContext, d->m_audioIndex, int64_t(seconds * d->m_audioStream->time_base.den), AVSEEK_FLAG_BACKWARD);
     d->m_mutex.unlock();
     d->m_bufferQueue.init();
-    //@warning 因为有maxQueueSize控制缓冲,因此会出现这种情况
+    //@warning 因为有缓冲队列,因此会出现这种情况
     //解码结束但播放未结束,需要重新启动解码线程
     if (!isRunning()) start();
 }
