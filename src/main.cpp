@@ -1,3 +1,4 @@
+#include "framelesswindow.h"
 #include "imageprovider.h"
 #include "musicplayer.h"
 
@@ -12,6 +13,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<LyricData>("an.lyrics", 1, 0, "LyricData");
     qmlRegisterType<LyricsModel>("an.lyrics", 1, 0, "LyricsModel");
+    qmlRegisterType<FramelessWindow>("an.window", 1, 0, "FramelessWindow");
 
     //给它一个parent
     MusicPlayer *musicPlayer = new MusicPlayer(qApp);

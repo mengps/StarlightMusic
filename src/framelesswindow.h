@@ -9,6 +9,7 @@ class FramelessWindow : public QQuickWindow
 
 public:
     explicit FramelessWindow(QWindow *parent = nullptr);
+    ~FramelessWindow();
 };
 
 #endif

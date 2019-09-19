@@ -1,21 +1,21 @@
 import QtQuick 2.12
-import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
+import an.window 1.0
 import "Api/Api.js" as Api
 import "Effects" as Effects
 import "Widgets" as Widgets
 import "DetailPanel"
 import "MenuPanel"
 
-Window {
+FramelessWindow {
     id: mainPanel
     visible: true
     width: 900
-    height: 600
+    height: 600/*
     opacity: 0
     minimumWidth: 900
     minimumHeight: 600
-    title: qsTr("StarlightMusic")
+    title: qsTr("StarlightMusic")*/
     //需要增加一个全局的SetttingManager
     property color globalColor: "white"
     Component.onCompleted: {
