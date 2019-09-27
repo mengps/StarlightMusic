@@ -9,6 +9,7 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
     QGuiApplication app(argc, argv);
 
     qmlRegisterType<LyricData>("an.lyrics", 1, 0, "LyricData");

@@ -16,6 +16,7 @@ LIBS += -L$$PWD/ffmpeg/lib \
         -lavutil \
         -lswscale \
         -lswresample \
+        -lDwmapi
 
 RC_ICONS += image/music.ico
 

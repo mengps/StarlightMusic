@@ -10,12 +10,12 @@ import "MenuPanel"
 FramelessWindow {
     id: mainPanel
     visible: true
-    width: 900
-    height: 600/*
-    opacity: 0
-    minimumWidth: 900
-    minimumHeight: 600
-    title: qsTr("StarlightMusic")*/
+    width: 750
+    height: 500
+    minimumWidth: 750
+    minimumHeight: 500
+    title: qsTr("StarlightMusic")
+    color: "#CC000000"
     //需要增加一个全局的SetttingManager
     property color globalColor: "white"
     Component.onCompleted: {
