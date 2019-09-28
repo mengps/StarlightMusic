@@ -9,7 +9,7 @@ Item {
     property real menuWidth: 45
     property real menuHeight: 50
     property color menuColor: "#fff"
-    property alias back: menuBack
+    property alias menuBack: menuBack
 
     onMenuVisibleChanged: {
         if(!menuVisible) {

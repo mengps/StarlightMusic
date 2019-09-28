@@ -1,13 +1,13 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-import an.window 1.0
+import QtQuick.Window 2.12
 import "Api/Api.js" as Api
 import "Effects" as Effects
 import "Widgets" as Widgets
 import "DetailPanel"
 import "MenuPanel"
 
-FramelessWindow {
+Window {
     id: mainPanel
     visible: true
     width: 750
@@ -37,7 +37,8 @@ FramelessWindow {
 
     Widgets.BlurImage {
         id: background
-        anchors.fill: parent
+        width: parent.width
+        height: parent.height
         blur: detailPanel.isVisiable
         fillMode: Image.PreserveAspectCrop
         source: "qrc:/image/background.jpg"
@@ -46,7 +47,6 @@ FramelessWindow {
 
     MenuPanel {
         id: menuPanel
-        anchors.left: parent.left
         height: parent.height
         width: parent.width
     }
@@ -83,7 +83,7 @@ FramelessWindow {
 
     Image {
         id: playbill
-        x: menuPanel.back.width
+        x: menuPanel.menuBack.width
         anchors.bottom: menuPanel.bottom
         sourceSize: Qt.size(100, 100)
         source: "qrc:/image/music.png"
