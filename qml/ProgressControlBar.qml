@@ -5,11 +5,13 @@ import "Widgets" as Widgets
 
 Item {
     id: root
+
     height: 30
     property bool pressed: false
     property real value: 0.0
     property bool hovered: false
     property alias handle: handle
+    property alias effect: effect
     property alias progressBack: progressBack
     property alias backColor: progressBack.color
     readonly property real minValue: 0.0
@@ -60,11 +62,11 @@ Item {
         Timer {
             id: effectTimer
             interval: 1000
-            running: true
+            running: effect.running
             repeat: true
             onTriggered: {
                 effect.width = progress.width;
-                effect.emitRate = effect.width / 12;
+                effect.emitRate = progress.width / 12;
             }
         }
     }

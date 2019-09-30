@@ -17,8 +17,8 @@ class MusicPlayer : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QUrl music READ music WRITE setMusic NOTIFY musicChanged)
-    Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
+    Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(QString singer READ singer NOTIFY singerChanged)
@@ -36,11 +36,11 @@ public:
     QUrl music() const;
     void setMusic(const QUrl &url);
 
-    qreal progress() const;
-    void setProgress(qreal progreass);
-
     int volume() const;
     void setVolume(int vol);
+
+    qreal progress() const;
+    void setProgress(qreal progreass);
 
     qreal duration() const;
     bool running() const;

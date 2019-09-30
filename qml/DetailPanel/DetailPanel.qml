@@ -80,7 +80,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: 50
         anchors.top: parent.top
-        anchors.topMargin: 100
+        anchors.topMargin: 60
         color: mainPanel.globalColor
         text: musicPlayer.title
         horizontalAlignment: Text.AlignHCenter

@@ -15,7 +15,7 @@ Window {
     minimumWidth: 750
     minimumHeight: 500
     title: qsTr("StarlightMusic")
-    color: "#CC000000"
+    color: "#000"
     //需要增加一个全局的SetttingManager
     property color globalColor: "white"
     Component.onCompleted: {
@@ -37,8 +37,7 @@ Window {
 
     Widgets.BlurImage {
         id: background
-        width: parent.width
-        height: parent.height
+        anchors.fill: parent
         blur: detailPanel.isVisiable
         fillMode: Image.PreserveAspectCrop
         source: "qrc:/image/background.jpg"
@@ -47,16 +46,15 @@ Window {
 
     MenuPanel {
         id: menuPanel
-        height: parent.height
-        width: parent.width
+        anchors.fill: parent
     }
 
     DetailPanel {
         id: detailPanel
         anchors.bottom: parent.bottom
-        color: "#88000000"
         width: parent.width
         height: 0
+        color: "#88000000"
         onIsVisiableChanged: {
             if (isVisiable) {
                 menuPanel.isVisible = false;
@@ -220,6 +218,7 @@ Window {
                     script: {
                         playButton.source = "qrc:/image/Player/pause.png";
                         playingEffect.running = true;
+                        progressControl.effect.running = true;
                         musicPlayer.volume = 0;
                         musicPlayer.resume();
                         buffAnimation.to = volumeBar.value;
@@ -234,6 +233,7 @@ Window {
                     script: {
                         playButton.source = "qrc:/image/Player/play.png";
                         playingEffect.running = false;
+                        progressControl.effect.running = false;
                         buffAnimation.to = 0;
                         buffAnimation.needStop = true;
                         buffAnimation.restart();

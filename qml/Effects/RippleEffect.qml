@@ -3,17 +3,24 @@ import QtQuick.Particles 2.12
 
 Item {
     id: root
+
     property alias running: particlesEmitter.enabled
     property alias size: particlesEmitter.endSize
     property alias source: particleImage.source
     property alias emitRate: particlesEmitter.emitRate
 
+    onRunningChanged: {
+        if (running) particleSystem.running = true;
+    }
+
     ParticleSystem {
         id: particleSystem
-        running: true
+        running: false
+        onEmptyChanged: if (empty) running = false;
 
         Emitter {
             id: particlesEmitter
+            enabled: false
             x: root.width / 2
             y: root.height / 2
             height: 1
