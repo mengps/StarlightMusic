@@ -31,18 +31,24 @@ class LyricsModel : public QObject
 public:
     LyricsModel(QObject *parent = nullptr);
 
-    QQmlListProperty<LyricData> model() const;
-    void setModel(const QList<LyricData *> &lyrics);
+    QQmlListProperty<LyricData> model();
+    void setModel(const QVector<LyricData *> &lyrics);
 
-    int size() const;
+    void append(LyricData *lyric);
+    int count() const;
     LyricData* at(int index);
+    void clear();
 
 signals:
     void modelChanged();
 
 private:
-    QQmlListProperty<LyricData> *m_proxy;
-    QList<LyricData *> m_list;
+    static void append(QQmlListProperty<LyricData> *list, LyricData *lyric);
+    static int count(QQmlListProperty<LyricData> *list);
+    static LyricData *at(QQmlListProperty<LyricData> *list, int index);
+    static void clear(QQmlListProperty<LyricData> *list);
+
+    QVector<LyricData *> m_list;
 };
 
 #endif

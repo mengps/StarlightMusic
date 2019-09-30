@@ -27,28 +27,62 @@ int64_t LyricData::pts() const
 LyricsModel::LyricsModel(QObject *parent)
     : QObject (parent)
 {
-    m_proxy = new QQmlListProperty<LyricData>(this, m_list);
+
 }
 
-QQmlListProperty<LyricData> LyricsModel::model() const
+QQmlListProperty<LyricData> LyricsModel::model()
 {
-    return *m_proxy;
+    return QQmlListProperty<LyricData>(this, this,
+                                       &LyricsModel::append,
+                                       &LyricsModel::count,
+                                       &LyricsModel::at,
+                                       &LyricsModel::clear);
 }
 
-void LyricsModel::setModel(const QList<LyricData *> &lyrics)
+void LyricsModel::setModel(const QVector<LyricData *> &lyrics)
 {
-    qDeleteAll(m_list);
+    for (auto it : m_list) it->deleteLater();
     m_list.clear();
     m_list = lyrics;
     emit modelChanged();
 }
 
-int LyricsModel::size() const
+void LyricsModel::append(LyricData *lyric)
 {
-    return m_list.size();
+    m_list.append(lyric);
+}
+
+int LyricsModel::count() const
+{
+    return m_list.count();
 }
 
 LyricData* LyricsModel::at(int index)
 {
     return m_list.at(index);
+}
+
+void LyricsModel::clear()
+{
+    m_list.clear();
+}
+
+void LyricsModel::append(QQmlListProperty<LyricData> *list, LyricData *lyric)
+{
+    return reinterpret_cast<LyricsModel*>(list->data)->append(lyric);
+}
+
+int LyricsModel::count(QQmlListProperty<LyricData> *list)
+{
+    return reinterpret_cast<LyricsModel*>(list->data)->count();
+}
+
+LyricData* LyricsModel::at(QQmlListProperty<LyricData> *list, int index)
+{
+    return reinterpret_cast<LyricsModel*>(list->data)->at(index);
+}
+
+void LyricsModel::clear(QQmlListProperty<LyricData> *list)
+{
+    return reinterpret_cast<LyricsModel*>(list->data)->clear();
 }

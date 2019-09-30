@@ -105,11 +105,11 @@ void MusicPlayer::setProgress(qreal ratio)
         d->m_decoder->setProgress(ratio);
         if (d->m_hasLyrics) {
             int64_t pts = int64_t(ratio * d->m_duration * 1000);
-            int size = d->m_lyricsModel->size();
-            for (int i = 0; i < size; i++) {
+            int count = d->m_lyricsModel->count();
+            for (int i = 0; i < count; i++) {
                 if (d->m_lyricsModel->at(i)->pts() > pts) {
                     d->m_lyricIndex = (i > 0) ? (i - 1) : 0;
-                    d->m_nextIndex = (d->m_lyricIndex + 1) < size ? d->m_lyricIndex + 1 : size;
+                    d->m_nextIndex = (d->m_lyricIndex + 1) < count ? d->m_lyricIndex + 1 : count;
                     emit lyricIndexChanged();
                     break;
                 }
@@ -189,7 +189,7 @@ void MusicPlayer::play(const QUrl &url)
     if (QFileInfo::exists(lrcFile)) {
         if (d->m_lrcDecoder->decode(lrcFile.toLocal8Bit().data())) {
             //创建Model
-            QList<LyricData *> model;
+            QVector<LyricData *> model;
             lyricPacket packet = d->m_lrcDecoder->readPacket();
             while (!packet.isEmpty()) {
                 LyricData *data = new LyricData(QString::fromStdString(packet.lyric), packet.pts);
@@ -198,7 +198,7 @@ void MusicPlayer::play(const QUrl &url)
             }
             d->m_lyricsModel->setModel(model);
             d->m_hasLyrics = true;
-            if (d->m_nextIndex + 1 < d->m_lyricsModel->size()) d->m_nextIndex++;
+            if (d->m_nextIndex + 1 < d->m_lyricsModel->count()) d->m_nextIndex++;
             //打印LRC元数据
             d->m_lrcDecoder->dumpMetadata(stdout);
         }
@@ -236,7 +236,7 @@ void MusicPlayer::update()
                 int64_t pts = int64_t(currentTime) * 1000;
                 if (pts > d->m_lyricsModel->at(d->m_lyricIndex)->pts() && pts > d->m_lyricsModel->at(d->m_nextIndex)->pts()) {
                     d->m_lyricIndex = d->m_nextIndex;
-                    if ((d->m_nextIndex + 1) < d->m_lyricsModel->size()) d->m_nextIndex++;
+                    if ((d->m_nextIndex + 1) < d->m_lyricsModel->count()) d->m_nextIndex++;
                     emit lyricIndexChanged();
                 }
             }
