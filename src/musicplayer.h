@@ -7,11 +7,8 @@
 #include <QObject>
 #include <QUrl>
 
-class AudioDecoder;
 class ImageProvider;
-class QAudioOutput;
-class QIODevice;
-class QTimer;
+class MusicPlayerPrivate;
 class MusicPlayer : public QObject
 {
     Q_OBJECT
@@ -78,27 +75,7 @@ private slots:
     void update();
 
 private:
-    bool m_running = false;
-    QUrl m_music = QUrl();
-    qreal m_progress = 0.0;
-    qreal m_duration = 0.0;
-    int m_volume = 100;
-    QString m_title = QString();
-    QString m_singer = QString();
-    QString m_album = QString();
-    QByteArray m_audioBuffer = QByteArray();
-    QTimer *m_playTimer = nullptr;
-    QScopedPointer<QAudioOutput> m_audioOutput;
-    QIODevice *m_audioDevice = nullptr;
-    AudioDecoder *m_decoder = nullptr;
-
-    bool m_hasLyrics = false;
-    QScopedPointer<LrcDecoder> m_lrcDecoder;
-    LyricsModel *m_lyricsModel = nullptr;
-    int m_lyricIndex = 0;
-    int m_nextIndex = 0;
-
-    ImageProvider *m_playbillProvider;
+    MusicPlayerPrivate *d = nullptr;
 };
 
 #endif // MUSICPLAYER_H

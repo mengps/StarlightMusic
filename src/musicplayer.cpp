@@ -8,36 +8,63 @@
 #include <QTimer>
 #include <QUrl>
 
+class MusicPlayerPrivate {
+public:
+    bool m_running = false;
+    QUrl m_music = QUrl();
+    qreal m_progress = 0.0;
+    qreal m_duration = 0.0;
+    int m_volume = 100;
+    QString m_title = QString();
+    QString m_singer = QString();
+    QString m_album = QString();
+    QByteArray m_audioBuffer = QByteArray();
+    QTimer *m_playTimer = nullptr;
+    QScopedPointer<QAudioOutput> m_audioOutput;
+    QIODevice *m_audioDevice = nullptr;
+    AudioDecoder *m_decoder = nullptr;
+
+    bool m_hasLyrics = false;
+    QScopedPointer<LrcDecoder> m_lrcDecoder;
+    LyricsModel *m_lyricsModel = nullptr;
+    int m_lyricIndex = 0;
+    int m_nextIndex = 0;
+
+    ImageProvider *m_playbillProvider;
+};
+
 MusicPlayer::MusicPlayer(QObject *parent)
     : QObject (parent)
 {
-    m_playbillProvider = new ImageProvider;
-    m_playTimer = new QTimer(this);
-    connect(m_playTimer, &QTimer::timeout, this, &MusicPlayer::update);
+    d = new MusicPlayerPrivate;
 
-    m_lyricsModel = new LyricsModel(this);
-    m_lrcDecoder.reset(new LrcDecoder);
-    m_decoder = new AudioDecoder(this);
-    connect(m_decoder, &AudioDecoder::error, this, &MusicPlayer::error);
-    connect(m_decoder, &AudioDecoder::hasPlaybill, this, [this](const QImage &playbill) {
-        m_playbillProvider->setPixmap(playbill);
+    d->m_playbillProvider = new ImageProvider;
+    d->m_playTimer = new QTimer(this);
+    connect(d->m_playTimer, &QTimer::timeout, this, &MusicPlayer::update);
+
+    d->m_lyricsModel = new LyricsModel(this);
+    d->m_lrcDecoder.reset(new LrcDecoder);
+    d->m_decoder = new AudioDecoder(this);
+    connect(d->m_decoder, &AudioDecoder::error, this, &MusicPlayer::error);
+    connect(d->m_decoder, &AudioDecoder::hasPlaybill, this, [this](const QImage &playbill) {
+        d->m_playbillProvider->setPixmap(playbill);
         emit playbillChanged();
     });
-    connect(m_decoder, &AudioDecoder::resolved, this, [this]() {
-        m_running = true;
-        m_title = m_decoder->title();
-        m_singer = m_decoder->singer();
-        m_album = m_decoder->album();
-        m_duration = m_decoder->duration();
+    connect(d->m_decoder, &AudioDecoder::resolved, this, [this]() {
+        d->m_running = true;
+        d->m_title = d->m_decoder->title();
+        d->m_singer = d->m_decoder->singer();
+        d->m_album = d->m_decoder->album();
+        d->m_duration = d->m_decoder->duration();
         emit titleChanged();
         emit singerChanged();
         emit albumChanged();
         emit durationChanged();
 
-        m_audioOutput.reset(new QAudioOutput(m_decoder->format()));
-        m_audioOutput->setVolume(m_volume / qreal(100.0));
-        m_audioDevice = m_audioOutput->start();
-        m_playTimer->start(100);
+        d->m_audioOutput.reset(new QAudioOutput(d->m_decoder->format()));
+        d->m_audioOutput->setVolume(d->m_volume / qreal(100.0));
+        d->m_audioDevice = d->m_audioOutput->start();
+        d->m_playTimer->start(100);
     });
 }
 
@@ -48,41 +75,41 @@ MusicPlayer::~MusicPlayer()
 
 ImageProvider *MusicPlayer::imageProvider()
 {
-    return m_playbillProvider;
+    return d->m_playbillProvider;
 }
 
 QUrl MusicPlayer::music() const
 {
-    return m_music;
+    return d->m_music;
 }
 
 void MusicPlayer::setMusic(const QUrl &url)
 {
-    if (url != m_music) {
-        m_music = url;
+    if (url != d->m_music) {
+        d->m_music = url;
         emit musicChanged();
     }
 }
 
 qreal MusicPlayer::progress() const
 {
-    return m_progress;
+    return d->m_progress;
 }
 
 void MusicPlayer::setProgress(qreal ratio)
 {
-    if (m_running && qAbs(ratio - m_progress) > 0.000001) {
-        m_progress = ratio;
-        m_audioBuffer.clear();
+    if (d->m_running && qAbs(ratio - d->m_progress) > 0.000001) {
+        d->m_progress = ratio;
+        d->m_audioBuffer.clear();
         emit progressChanged();
-        m_decoder->setProgress(ratio);
-        if (m_hasLyrics) {
-            int64_t pts = int64_t(ratio * m_duration * 1000);
-            int size = m_lyricsModel->size();
+        d->m_decoder->setProgress(ratio);
+        if (d->m_hasLyrics) {
+            int64_t pts = int64_t(ratio * d->m_duration * 1000);
+            int size = d->m_lyricsModel->size();
             for (int i = 0; i < size; i++) {
-                if (m_lyricsModel->at(i)->pts() > pts) {
-                    m_lyricIndex = (i > 0) ? (i - 1) : 0;
-                    m_nextIndex = (m_lyricIndex + 1) < size ? m_lyricIndex + 1 : size;
+                if (d->m_lyricsModel->at(i)->pts() > pts) {
+                    d->m_lyricIndex = (i > 0) ? (i - 1) : 0;
+                    d->m_nextIndex = (d->m_lyricIndex + 1) < size ? d->m_lyricIndex + 1 : size;
                     emit lyricIndexChanged();
                     break;
                 }
@@ -93,15 +120,15 @@ void MusicPlayer::setProgress(qreal ratio)
 
 int MusicPlayer::volume() const
 {
-    return m_volume;
+    return d->m_volume;
 }
 
 void MusicPlayer::setVolume(int vol)
 {
-    if (vol != m_volume) {
-        m_volume = vol;
-        if (m_audioOutput) {
-            m_audioOutput->setVolume(vol / qreal(100.0));
+    if (vol != d->m_volume) {
+        d->m_volume = vol;
+        if (d->m_audioOutput) {
+            d->m_audioOutput->setVolume(vol / qreal(100.0));
         }
         emit volumeChanged();
     }
@@ -109,126 +136,126 @@ void MusicPlayer::setVolume(int vol)
 
 qreal MusicPlayer::duration() const
 {
-    return m_duration;
+    return d->m_duration;
 }
 
 bool MusicPlayer::running() const
 {
-    return m_running;
+    return d->m_running;
 }
 
 QString MusicPlayer::title() const
 {
-    return m_title;
+    return d->m_title;
 }
 
 QString MusicPlayer::singer() const
 {
-    return m_singer;
+    return d->m_singer;
 }
 
 QString MusicPlayer::album() const
 {
-    return m_album;
+    return d->m_album;
 }
 
 int MusicPlayer::lyricIndex() const
 {
-    return m_lyricIndex;
+    return d->m_lyricIndex;
 }
 
 LyricsModel *MusicPlayer::lyrics() const
 {
-    return m_lyricsModel;
+    return d->m_lyricsModel;
 }
 
 void MusicPlayer::play(const QUrl &url)
 {
     suspend();
     setMusic(url);
-    m_running = false;
-    m_progress = 0.0;
+    d->m_running = false;
+    d->m_progress = 0.0;
     emit progressChanged();
-    m_audioBuffer.clear();
-    m_hasLyrics = false;
+    d->m_audioBuffer.clear();
+    d->m_hasLyrics = false;
 
     QString filename = url.toLocalFile();
-    m_decoder->open(filename);
+    d->m_decoder->open(filename);
 
-    m_lyricIndex = 0;
-    m_nextIndex = 0;
+    d->m_lyricIndex = 0;
+    d->m_nextIndex = 0;
     int suffixLength = QFileInfo(filename).suffix().length();
     QString lrcFile = filename.mid(0, filename.length() - suffixLength - 1) + ".lrc";
     if (QFileInfo::exists(lrcFile)) {
-        if (m_lrcDecoder->decode(lrcFile.toLocal8Bit().data())) {
+        if (d->m_lrcDecoder->decode(lrcFile.toLocal8Bit().data())) {
             //创建Model
             QList<LyricData *> model;
-            lyricPacket packet = m_lrcDecoder->readPacket();
+            lyricPacket packet = d->m_lrcDecoder->readPacket();
             while (!packet.isEmpty()) {
                 LyricData *data = new LyricData(QString::fromStdString(packet.lyric), packet.pts);
                 model.append(data);
-                packet = m_lrcDecoder->readPacket();
+                packet = d->m_lrcDecoder->readPacket();
             }
-            m_lyricsModel->setModel(model);
-            m_hasLyrics = true;
-            if (m_nextIndex + 1 < m_lyricsModel->size()) m_nextIndex++;
+            d->m_lyricsModel->setModel(model);
+            d->m_hasLyrics = true;
+            if (d->m_nextIndex + 1 < d->m_lyricsModel->size()) d->m_nextIndex++;
             //打印LRC元数据
-            m_lrcDecoder->dumpMetadata(stdout);
+            d->m_lrcDecoder->dumpMetadata(stdout);
         }
     }
 }
 
 void MusicPlayer::suspend()
 {
-    if(m_playTimer->isActive())
-        m_playTimer->stop();
+    if(d->m_playTimer->isActive())
+        d->m_playTimer->stop();
 }
 
 void MusicPlayer::resume()
 {
-    if (m_running) m_playTimer->start(100);
-    else if (!m_music.isEmpty()) play(m_music);
+    if (d->m_running) d->m_playTimer->start(100);
+    else if (!d->m_music.isEmpty()) play(d->m_music);
 }
 
 void MusicPlayer::update()
 {
-    while (m_audioBuffer.size() < m_audioOutput->bytesFree()) {
-        AudioPacket packet = m_decoder->currentPacket();   
+    while (d->m_audioBuffer.size() < d->m_audioOutput->bytesFree()) {
+        AudioPacket packet = d->m_decoder->currentPacket();
         QByteArray data = packet.data;
         qreal currentTime = packet.time;
-        if (currentTime >= m_duration || (data.isEmpty() && currentTime < 0.00000001)) {
-            m_progress = 1.0;
-            m_running = false;
-            m_decoder->stop();
-            m_playTimer->stop();
+        if (currentTime >= d->m_duration || (data.isEmpty() && currentTime < 0.00000001)) {
+            d->m_progress = 1.0;
+            d->m_running = false;
+            d->m_decoder->stop();
+            d->m_playTimer->stop();
             emit finished();
             emit progressChanged();
             return;
         } else {
-            if (m_hasLyrics) {
+            if (d->m_hasLyrics) {
                 int64_t pts = int64_t(currentTime) * 1000;
-                if (pts > m_lyricsModel->at(m_lyricIndex)->pts() && pts > m_lyricsModel->at(m_nextIndex)->pts()) {
-                    m_lyricIndex = m_nextIndex;
-                    if ((m_nextIndex + 1) < m_lyricsModel->size()) m_nextIndex++;
+                if (pts > d->m_lyricsModel->at(d->m_lyricIndex)->pts() && pts > d->m_lyricsModel->at(d->m_nextIndex)->pts()) {
+                    d->m_lyricIndex = d->m_nextIndex;
+                    if ((d->m_nextIndex + 1) < d->m_lyricsModel->size()) d->m_nextIndex++;
                     emit lyricIndexChanged();
                 }
             }
-            m_progress = currentTime / m_duration;
+            d->m_progress = currentTime / d->m_duration;
             emit progressChanged();
         }
 
         if (data.isEmpty()) break;
-        m_audioBuffer += data;
+        d->m_audioBuffer += data;
     }
 
-    int readSize = m_audioOutput->periodSize();
-    int chunks = m_audioBuffer.size() / readSize;
+    int readSize = d->m_audioOutput->periodSize();
+    int chunks = d->m_audioBuffer.size() / readSize;
     while (chunks--) {
-        QByteArray pcm = m_audioBuffer.mid(0, readSize);
+        QByteArray pcm = d->m_audioBuffer.mid(0, readSize);
         int size = pcm.size();
-        m_audioBuffer.remove(0, size);
+        d->m_audioBuffer.remove(0, size);
 
-        if (size) m_audioDevice->write(pcm);
+        if (size) d->m_audioDevice->write(pcm);
         if (size != readSize) break;
     }
 }
