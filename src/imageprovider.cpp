@@ -8,7 +8,7 @@ ImageProvider::ImageProvider()
     m_pixmap = pixmap;
 }
 
-void ImageProvider::setPixmap(QImage image)
+void ImageProvider::setImage(const QImage &image)
 {
     if (!image.isNull()) {
         m_pixmap = QPixmap::fromImage(image);

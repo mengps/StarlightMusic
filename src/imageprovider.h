@@ -7,7 +7,7 @@ class ImageProvider : public QQuickImageProvider
 {
 public:
     ImageProvider();
-    void setPixmap(QImage image);
+    void setImage(const QImage &image);
     QPixmap requestPixmap(const QString &id, QSize *size, const QSize &requestedSize) override;
 
 private:
