@@ -3,6 +3,7 @@
 
 #include "lrcdecoder.h"
 #include "lyricsmodel.h"
+#include "musicmodel.h"
 
 #include <QObject>
 #include <QUrl>
@@ -13,25 +14,26 @@ class MusicPlayer : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QUrl music READ music WRITE setMusic NOTIFY musicChanged)
+    Q_PROPERTY(QUrl curMusic READ curMusic WRITE setCurMusic NOTIFY curMusicChanged)
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(QString singer READ singer NOTIFY singerChanged)
     Q_PROPERTY(QString album READ album NOTIFY albumChanged)
-    Q_PROPERTY(LyricsModel* lyrics READ lyrics NOTIFY lyricsChanged)
     Q_PROPERTY(int lyricIndex READ lyricIndex NOTIFY lyricIndexChanged)
+    Q_PROPERTY(LyricsModel* lyrics READ lyrics NOTIFY lyricsChanged)
+    Q_PROPERTY(MusicModel* music READ music NOTIFY musicChanged)
     Q_PROPERTY(bool running READ running CONSTANT)
 
 public:
     MusicPlayer(QObject *parent = nullptr);
     ~MusicPlayer();
 
-    ImageProvider *imageProvider();
+    ImageProvider* imageProvider();
 
-    QUrl music() const;
-    void setMusic(const QUrl &url);
+    QUrl curMusic() const;
+    void setCurMusic(const QUrl &url);
 
     int volume() const;
     void setVolume(int vol);
@@ -48,6 +50,7 @@ public:
     int lyricIndex() const;
 
     LyricsModel* lyrics() const;
+    MusicModel* music() const;
 
     /** @note 开始播放 */
     Q_INVOKABLE void play(const QUrl &url);
@@ -55,12 +58,14 @@ public:
     Q_INVOKABLE void suspend();
     /** @note 继续播放 */
     Q_INVOKABLE void resume();
+    /** @note 添加到播放列表 */
+    Q_INVOKABLE void addMusicList(const QList<QUrl> &urls);
 
 signals:
     void error(const QString &errorString);
 
     void finished();
-    void musicChanged();
+    void curMusicChanged();
     void progressChanged();
     void volumeChanged();
     void durationChanged();
@@ -68,6 +73,7 @@ signals:
     void singerChanged();
     void albumChanged();
     void lyricsChanged();
+    void musicChanged();
     void lyricIndexChanged();
     void playbillChanged();
 

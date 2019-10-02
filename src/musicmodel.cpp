@@ -8,7 +8,7 @@ extern "C"
 
 static AVFormatContext *avformart = nullptr;
 
-MusicData::MusicData(const QString &filename, QObject *parent)
+MusicData::MusicData(const QUrl &filename, QObject *parent)
     : QObject (parent)
     , m_filename(filename)
 {
@@ -35,14 +35,14 @@ QString MusicData::album() const
     return m_album;
 }
 
-QString MusicData::filename() const
+QUrl MusicData::filename() const
 {
     return m_filename;
 }
 
-MusicData* MusicData::create(const QString &filename, QObject *parent)
+MusicData* MusicData::create(const QUrl &filename, QObject *parent)
 {
-    int ret = avformat_open_input(&avformart, filename.toStdString().c_str(), nullptr, nullptr);
+    int ret = avformat_open_input(&avformart, filename.toLocalFile().toStdString().c_str(), nullptr, nullptr);
 
     if (ret != 0) {
         avformat_close_input(&avformart);
@@ -56,7 +56,7 @@ MusicData* MusicData::create(const QString &filename, QObject *parent)
     if (album) data->m_album = album->value;
     if (artist) data->m_singer = artist->value;
     if (title) data->m_title = title->value;
-    else data->m_title = QFileInfo(filename).baseName();
+    else data->m_title = QFileInfo(filename.toLocalFile()).baseName();
 
     avformat_find_stream_info(avformart, nullptr);
     int streamIdx = av_find_best_stream(avformart, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
@@ -122,17 +122,6 @@ void MusicModel::sort(SortKey key, SortMode mode)
         } else {
             std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
                 return d1->m_album > d2->m_album;
-            });
-        }
-        break;
-    case SortKey::Filename:
-        if (mode == SortMode::Less) {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
-                return d1->m_filename < d2->m_filename;
-            });
-        } else {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
-                return d1->m_filename > d2->m_filename;
             });
         }
         break;

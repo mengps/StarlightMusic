@@ -1,7 +1,8 @@
-#ifndef MUSICLIST_H
-#define MUSICLIST_H
+#ifndef MUSICMODEL_H
+#define MUSICMODEL_H
 
 #include <QQmlListProperty>
+#include <QUrl>
 
 class MusicData  : public QObject
 {
@@ -11,25 +12,25 @@ class MusicData  : public QObject
     Q_PROPERTY(QString title READ title CONSTANT)
     Q_PROPERTY(QString singer READ singer CONSTANT)
     Q_PROPERTY(QString album READ album CONSTANT)
-    Q_PROPERTY(QString filename READ filename CONSTANT)
+    Q_PROPERTY(QUrl filename READ filename CONSTANT)
 
 public:
-    MusicData(const QString &filename = QString(), QObject *parent = nullptr);
+    MusicData(const QUrl &filename = QUrl(), QObject *parent = nullptr);
 
     qreal duration() const;
     QString title() const;
     QString singer() const;
     QString album() const;
-    QString filename() const;
+    QUrl filename() const;
 
-    static MusicData* create(const QString &filename, QObject *parent = nullptr);
+    static MusicData* create(const QUrl &filename, QObject *parent = nullptr);
 
 private:
     qreal m_duration = 0.0;
     QString m_title = "未知";
     QString m_singer = "未知";
     QString m_album = "未知";
-    QString m_filename = QString();
+    QUrl m_filename = QUrl();
 
     friend class MusicModel;
 };
@@ -47,8 +48,7 @@ public:
         Duration = 1,
         Title,
         Singer,
-        Album,
-        Filename
+        Album
     };
 
     enum class SortMode
