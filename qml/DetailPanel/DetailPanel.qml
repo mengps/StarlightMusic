@@ -1,5 +1,5 @@
 import QtQuick 2.12
-import an.lyrics 1.0
+import an.lyrics.model 1.0
 import "../Widgets" as Widgets
 
 Rectangle {

@@ -3,7 +3,7 @@ QT += quick multimedia
 CONFIG += c++11 debug_and_release
 
 CONFIG(debug, debug|release) {
-    DEFINES -= NO_BUFFER_OUTPUT
+    DEFINES += NO_BUFFER_OUTPUT
 } else {
     DEFINES += NO_BUFFER_OUTPUT
 }
@@ -36,6 +36,7 @@ HEADERS += \
     src/imageprovider.h \
     src/lrcdecoder.h \
     src/lyricsmodel.h \
+    src/musicmodel.h \
     src/musicplayer.h
 
 SOURCES += \
@@ -44,6 +45,7 @@ SOURCES += \
     src/lrcdecoder.cpp \
     src/lyricsmodel.cpp \
     src/main.cpp \
+    src/musicmodel.cpp \
     src/musicplayer.cpp
 
 RESOURCES += \

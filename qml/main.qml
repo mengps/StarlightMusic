@@ -38,7 +38,7 @@ Window {
     Widgets.BlurImage {
         id: background
         anchors.fill: parent
-        blur: detailPanel.isVisiable
+        blur: detailPanel.isVisiable || menuPanel.content.isVisible
         fillMode: Image.PreserveAspectCrop
         source: "qrc:/image/background.jpg"
         sourceSize: Qt.size(900, 600)
@@ -74,6 +74,7 @@ Window {
                     //加入到播放列表
                 }
                 musicPlayer.play(drop.urls[0]);
+                musicPlayer.addMusicList(drop.urls);
                 playButton.state = "playing";
             }
         }
@@ -171,11 +172,12 @@ Window {
     }
 
     Widgets.FlowText {
-        id: musicInfo
-        width: 180
+        id: musicTitle
         height: 30
         anchors.left: progressControl.left
         anchors.leftMargin: 4
+        anchors.right: prevButton.left
+        anchors.rightMargin: 20
         anchors.top: progressControl.bottom
         anchors.topMargin: 10
         color: mainPanel.globalColor
