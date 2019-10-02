@@ -8,8 +8,10 @@ Item {
     property bool menuVisible: false
     property real menuWidth: 45
     property real menuHeight: 50
-    property color menuColor: "#fff"
+    property color menuColor: "#FFF"
+    property color menuBackColor: "#70AAAAAA"
     property alias menuBack: menuBack
+    property alias content: content
 
     onMenuVisibleChanged: {
         if(!menuVisible) {
@@ -94,7 +96,7 @@ Item {
     MenuButton {
         id: closeMenu
         source: "qrc:/image/Player/close.png"
-        color: "#aaaaaaaa"
+        color: root.menuBackColor
         imageColor: root.menuColor
         width: 0
         height: parent.menuHeight
@@ -114,34 +116,56 @@ Item {
         anchors.left: menuBack.right
         width: 0
         height: root.height
-        color: "#aaaaaaaa"
+        clip: true
+        color: root.menuBackColor
         property bool isVisible: false
 
         function display() {
             if (root.isVisible) {
                 isVisible = true;
+                contentAnimation.needStop = true;
                 contentAnimation.to = root.width - root.menuWidth;
                 contentAnimation.restart();
             }
         }
         function hide() {
             isVisible = false;
+            contentAnimation.needStop = false;
             contentAnimation.to = 0;
             contentAnimation.restart();
         }
 
-        NumberAnimation on width{
+        NumberAnimation on width {
             id: contentAnimation
             running: false
             duration: 500
             easing.type: Easing.InOutQuad
+            onStopped: binder.when = needStop;
+            property bool needStop: false
+        }
+
+        MusicList {
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+        }
+
+        Binding {
+            id: binder
+            when: false
+            target: content
+            property: "width"
+            value: root.width - root.menuWidth
         }
     }
 
     MenuButton {
         id: listMenu
         source: "qrc:/image/Player/content.png"
-        color: "#aaaaaaaa"
+        color: root.menuBackColor
         imageColor: root.menuColor
         toolTip: qsTr("播放列表")
         width: 0
@@ -159,7 +183,7 @@ Item {
     MenuButton {
         id: historyMenu
         source: "qrc:/image/Player/history.png"
-        color: "#aaaaaaaa"
+        color: root.menuBackColor
         imageColor: root.menuColor
         toolTip: qsTr("历史播放记录")
         width: 0
@@ -170,7 +194,7 @@ Item {
     MenuButton {
         id: skinMenu
         source: "qrc:/image/Player/skin.png"
-        color: "#aaaaaaaa"
+        color: root.menuBackColor
         imageColor: root.menuColor
         toolTip: qsTr("更换皮肤")
         width: 0
