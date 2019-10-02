@@ -57,7 +57,15 @@ MusicData* MusicData::create(const QString &filename, QObject *parent)
     if (artist) data->m_singer = artist->value;
     if (title) data->m_title = title->value;
     else data->m_title = QFileInfo(filename).baseName();
-    data->m_duration = qreal(avformart->duration) / AV_TIME_BASE;
+
+    avformat_find_stream_info(avformart, nullptr);
+    int streamIdx = av_find_best_stream(avformart, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (ret < 0) {
+        data->m_duration = 0.0;
+    } else {
+        AVStream *stream = avformart->streams[streamIdx];
+        data->m_duration = stream->duration * av_q2d(stream->time_base);
+    }
 
     avformat_close_input(&avformart);
 

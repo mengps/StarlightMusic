@@ -25,11 +25,11 @@ public:
     static MusicData* create(const QString &filename, QObject *parent = nullptr);
 
 private:
-    qreal m_duration;
-    QString m_title;
-    QString m_singer;
-    QString m_album;
-    QString m_filename;
+    qreal m_duration = 0.0;
+    QString m_title = "未知";
+    QString m_singer = "未知";
+    QString m_album = "未知";
+    QString m_filename = QString();
 
     friend class MusicModel;
 };
