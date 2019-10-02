@@ -1,4 +1,5 @@
 #include "imageprovider.h"
+#include "musicmodel.h"
 #include "musicplayer.h"
 
 #include <QGuiApplication>
@@ -10,8 +11,10 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
 
-    qmlRegisterType<LyricData>("an.lyrics", 1, 0, "LyricData");
-    qmlRegisterType<LyricsModel>("an.lyrics", 1, 0, "LyricsModel");
+    qmlRegisterType<LyricData>("an.lyrics.model", 1, 0, "LyricData");
+    qmlRegisterType<LyricsModel>("an.lyrics.model", 1, 0, "LyricsModel");
+    qmlRegisterType<MusicData>("an.music.model", 1, 0, "MusicData");
+    qmlRegisterType<MusicModel>("an.music.model", 1, 0, "MusicModel");
 
     //给它一个parent
     MusicPlayer *musicPlayer = new MusicPlayer(qApp);
