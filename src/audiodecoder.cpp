@@ -152,7 +152,7 @@ void AudioDecoderPrivate::cleanup()
     m_audioStream = m_videoStream = nullptr;
     m_title.clear();
     m_singer = QString("未知");
-    m_album =  QString("无");
+    m_album =  QString("未知");
     m_playbill = QImage();
     m_duration = 0.0;
     m_runnable = true;
