@@ -6,17 +6,17 @@
 
 ---
 
-### 效果预览(GIF 12MB)
-
-![Image text](preview/preview.gif) 
-
----
-
 ### 安装、配置 
 
  - 下载 Qt [Qt官网](https://www.qt.io/)
 
  - 下载 FFmpeg [FFmpeg官网](https://www.ffmpeg.org/)
+
+---
+
+### 效果预览(GIF 12MB)
+
+![Image text](preview/preview.gif) 
 
 ---
 
@@ -29,6 +29,24 @@
 
    如果需要，可以自由扩展功能
 ```
+
+---
+
+### 快捷键说明
+
+ 按键 `Tab` 打开/关闭 播放列表
+
+ 按键 `~` 打开/关闭 歌词页
+
+ 按键 `⌴` 播放/暂停 
+
+ 按键 `←` 后退 5%
+
+ 按键 `→` 快进 5%
+
+ 按键 `Ctrl + ←` 上一首
+
+ 按键 `Ctrl + →` 下一首 
 
 ---
 
