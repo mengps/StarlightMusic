@@ -42,11 +42,51 @@ Window {
         fillMode: Image.PreserveAspectCrop
         source: "qrc:/image/background.jpg"
         sourceSize: Qt.size(900, 600)
+        focus: true
+        Keys.enabled: true
+        Keys.onPressed: {
+            event.accepted = true;
+            switch (event.key) {
+            case Qt.Key_Space:
+                playButton.clicked();
+                break;
+            case Qt.Key_Left:
+                if (event.modifiers & Qt.ControlModifier) {
+                    prevButton.clicked();
+                } else {
+                    let v1 = progressControl.value - 0.05 > 0.0000001 ? progressControl.value - 0.05 : 0.0;
+                    progressControl.setProgress(v1);
+                }
+                break;
+            case Qt.Key_Right:
+                if (event.modifiers & Qt.ControlModifier) {
+                    nextButton.clicked();
+                } else {
+                    let v2 = progressControl.value + 0.05 < 0.9999999 ? progressControl.value + 0.05 : 1.0;
+                    progressControl.setProgress(v2);
+                }
+                break;
+            case Qt.Key_Tab:
+                menuPanel.listMenuClick();
+                break;
+            case Qt.Key_QuoteLeft:
+                if (detailPanel.isVisiable) {
+                    detailPanel.hide();
+                } else {
+                    detailPanel.display();
+                }
+                break;
+            default:
+                event.accepted = false;
+                break;
+            }
+        }
     }
 
     MenuPanel {
         id: menuPanel
         anchors.fill: parent
+        contentHeight: progressControl.y
     }
 
     DetailPanel {
@@ -70,12 +110,7 @@ Window {
         anchors.fill: parent
         onDropped: {
             if(drop.hasUrls) {
-                for(var i = 0; i < drop.urls.length; i++) {
-                    //加入到播放列表
-                }
-                musicPlayer.play(drop.urls[0]);
                 musicPlayer.addMusicList(drop.urls);
-                playButton.state = "playing";
             }
         }
     }
@@ -146,14 +181,18 @@ Window {
         anchors.bottomMargin: 60
         onPressedChanged: {
             if (!pressed) {
-                musicPlayer.volume = 0;
-                musicPlayer.progress = value;
-                if (!volumeButton.mute) {
-                    //音量缓冲
-                    buffAnimation.to = volumeBar.value;
-                    buffAnimation.needStop = false;
-                    buffAnimation.restart();
-                }
+                setProgress(value);
+            }
+        }
+
+        function setProgress(v) {
+            musicPlayer.volume = 0;
+            musicPlayer.progress = v;
+            if (!volumeButton.mute) {
+                //音量缓冲
+                buffAnimation.to = volumeBar.value;
+                buffAnimation.needStop = false;
+                buffAnimation.restart();
             }
         }
 
@@ -163,11 +202,6 @@ Window {
                 progressControl.setValue(musicPlayer.progress);
                 timeText.update();
             }
-            onFinished: {
-                //musicPlayer.play(musicPlayer.music);
-                playButton.state = "pausing";
-            }
-            onError: print(errorString);
         }
     }
 
@@ -246,7 +280,16 @@ Window {
         toolTip: state == "playing" ? qsTr("暂停") : qsTr("播放")
         onClicked: {
             if (state == "playing") state = "pausing";
-            else if (state == "pausing") state = "playing";
+            else state = "playing";
+        }
+
+        Connections {
+            target: musicPlayer
+            onPlayingChanged: {
+                if (playButton.state == "pausing" && musicPlayer.playing)
+                    playButton.state = "playing";
+            }
+            onFinished: playButton.state = "pausing";
         }
 
         NumberAnimation {
@@ -281,7 +324,7 @@ Window {
         height: 22
         color: mainPanel.globalColor
         toolTip: qsTr("上一首")
-        onClicked: print("prev")
+        onClicked: musicPlayer.playPrev();
     }
 
     Widgets.Button {
@@ -294,7 +337,7 @@ Window {
         height: 22
         color: mainPanel.globalColor
         toolTip: qsTr("下一首")
-        onClicked: print("next")
+        onClicked: musicPlayer.playNext();
     }
 
     Widgets.Button {
