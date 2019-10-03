@@ -1,4 +1,5 @@
 #include "imageprovider.h"
+#include "lyricsmodel.h"
 #include "musicmodel.h"
 #include "musicplayer.h"
 
