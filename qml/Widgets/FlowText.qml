@@ -6,6 +6,9 @@ Item {
     property alias text: text.text
     property alias color: text.color
     property alias font: text.font
+    onWidthChanged: {
+        text.flow();
+    }
 
     function run(direction) {
         if (direction) {
@@ -34,6 +37,10 @@ Item {
         id: text
         anchors.verticalCenter: parent.verticalCenter
         onTextChanged: {
+            flow();
+        }
+
+        function flow() {
             root.stop();
             x = 0;
             if (implicitWidth > root.width) root.run(false);
