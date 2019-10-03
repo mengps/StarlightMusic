@@ -141,10 +141,14 @@ QQmlListProperty<MusicData> MusicModel::model()
 
 void MusicModel::setModel(const QVector<MusicData *> &music)
 {
-    for (auto it : m_list) it->deleteLater();
     m_list.clear();
     m_list = music;
     emit modelChanged();
+}
+
+int MusicModel::indexof(MusicData *const &music)
+{
+    return m_list.indexOf(music);
 }
 
 void MusicModel::append(MusicData *music)
@@ -164,6 +168,7 @@ MusicData* MusicModel::at(int index)
 
 void MusicModel::clear()
 {
+    for (auto it : m_list) it->deleteLater();
     return m_list.clear();
 }
 

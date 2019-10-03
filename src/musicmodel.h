@@ -63,6 +63,7 @@ public:
 
     QQmlListProperty<MusicData> model();
     void setModel(const QVector<MusicData *> &music);
+    int indexof(MusicData *const &music);
 
     void append(MusicData *music);
     int count() const;
