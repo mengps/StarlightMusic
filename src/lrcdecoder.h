@@ -17,7 +17,7 @@ class LrcDecoderPrivate;
 class LrcDecoder
 {
 public:
-    enum SeekFlag {
+    enum class SeekFlag {
         SeekForward = 1,
         SeekBackward
     };
@@ -51,7 +51,7 @@ public:
      * @param flag 查找标志
      * @return 成功返回true,否则返回false
      */
-    bool seek(int64_t timestamp, SeekFlag flag = SeekForward);
+    bool seek(int64_t timestamp, SeekFlag flag = SeekFlag::SeekForward);
 
     /**
      * @brief 转储元数据

@@ -126,7 +126,7 @@ bool LrcDecoder::seek(int64_t timestamp, LrcDecoder::SeekFlag flag)
 {
     for (auto it = d->m_lyrics.begin(); it != d->m_lyrics.end(); it++) {
         if (it->first > timestamp) {
-            if (flag == SeekForward) d->m_readIndex = --it;
+            if (flag == SeekFlag::SeekForward) d->m_readIndex = --it;
             else d->m_readIndex = it;
 
             return true;

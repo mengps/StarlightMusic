@@ -41,7 +41,6 @@ QQmlListProperty<LyricData> LyricsModel::model()
 
 void LyricsModel::setModel(const QVector<LyricData *> &lyrics)
 {
-    for (auto it : m_list) it->deleteLater();
     m_list.clear();
     m_list = lyrics;
     emit modelChanged();
@@ -64,7 +63,9 @@ LyricData* LyricsModel::at(int index)
 
 void LyricsModel::clear()
 {
+    for (auto it : m_list) it->deleteLater();
     m_list.clear();
+    emit modelChanged();
 }
 
 void LyricsModel::append(QQmlListProperty<LyricData> *list, LyricData *lyric)
