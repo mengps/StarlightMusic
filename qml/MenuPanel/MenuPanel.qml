@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.12
 import "../Widgets" as Widgets
 
 Item {
@@ -8,6 +9,7 @@ Item {
     property bool menuVisible: false
     property real menuWidth: 45
     property real menuHeight: 50
+    property real contentHeight: 400
     property color menuColor: "#FFF"
     property color menuBackColor: "#70AAAAAA"
     property alias menuBack: menuBack
@@ -31,6 +33,10 @@ Item {
         animation.index = 6;
         animation.isHide = true;
         animation.start();
+    }
+
+    function listMenuClick() {
+        listMenu.clicked();
     }
 
     NumberAnimation {
@@ -144,21 +150,21 @@ Item {
             property bool needStop: false
         }
 
-        MusicList {
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.right: parent.right
-            anchors.rightMargin: 10
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-        }
-
         Binding {
             id: binder
             when: false
             target: content
             property: "width"
             value: root.width - root.menuWidth
+        }
+
+        MusicList {
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.top: parent.top
+            height: root.contentHeight
         }
     }
 

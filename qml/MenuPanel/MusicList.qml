@@ -1,18 +1,16 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.12
 import an.music.model 1.0
 import "../Api/Api.js" as Api
+import "../Widgets" as Widgets
 
-ListView {
-    id: musicListView
-
+Item {
+    id: root
     property color headerColor: "#55FFFFFF"
     property color headerBorderColor: "#FFF"
 
-    anchors.fill: parent
-    clip: true
-    spacing: 4
-    model: musicPlayer.music.model
-    header: Row {
+    Row {
+        id: headerItem
         width: parent.width
         height: 54
         spacing: 2
@@ -21,8 +19,8 @@ ListView {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color:  musicListView.headerColor
-            border.color: musicListView.headerBorderColor
+            color:  root.headerColor
+            border.color: root.headerBorderColor
             radius: 4
 
             Text {
@@ -45,11 +43,11 @@ ListView {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(musicListView.headerColor);
+                    parent.color = Qt.darker(root.headerColor, 1.4);
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = musicListView.headerColor;
+                    parent.color = root.headerColor;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
@@ -59,8 +57,8 @@ ListView {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color: musicListView.headerColor
-            border.color: musicListView.headerBorderColor
+            color: root.headerColor
+            border.color: root.headerBorderColor
             radius: 4
 
             Text {
@@ -83,11 +81,11 @@ ListView {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(musicListView.headerColor);
+                    parent.color = Qt.darker(root.headerColor, 1.4);
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = musicListView.headerColor;
+                    parent.color = root.headerColor;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
@@ -97,8 +95,8 @@ ListView {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color:  musicListView.headerColor
-            border.color: musicListView.headerBorderColor
+            color:  root.headerColor
+            border.color: root.headerBorderColor
             radius: 4
 
             Text {
@@ -121,11 +119,11 @@ ListView {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(musicListView.headerColor);
+                    parent.color = Qt.darker(root.headerColor, 1.4);
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = musicListView.headerColor;
+                    parent.color = root.headerColor;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
@@ -135,8 +133,8 @@ ListView {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color:  musicListView.headerColor
-            border.color: musicListView.headerBorderColor
+            color:  root.headerColor
+            border.color: root.headerBorderColor
             radius: 4
 
             Text {
@@ -159,55 +157,102 @@ ListView {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(musicListView.headerColor);
+                    parent.color = Qt.darker(root.headerColor, 1.4);
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = musicListView.headerColor;
+                    parent.color = root.headerColor;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
         }
     }
-    delegate: Rectangle {
-        clip: true
-        height: 30
-        width: parent.width
-        color: "transparent"
-        radius: 2
 
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            onDoubleClicked: musicPlayer.play(modelData.filename)
-            onEntered: {
-                parent.color = musicListView.headerColor;
-            }
-            onExited: {
-                parent.color = "transparent";
-            }
-        }
+    Component {
+        id: delegate
 
-        FontMetrics {
-            id: fontMetrics
-            font.pointSize: 11
-        }
-
-        Row {
-            width: parent.width
+        Rectangle {
+            clip: true
             height: 30
-            spacing: 2
+            width: parent.width
+            color:  "transparent"
+            radius: 2
+            property bool hovered: false
+
+            Rectangle {
+                id: indicator
+                width: 10
+                height: 10
+                radius: 5
+                anchors.verticalCenter: parent.verticalCenter
+                color: modelData == musicPlayer.curMusic ? "#AAFFFFFF" : "transparent"
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+
+                function contains(item, x, y) {
+                    return x > item.x && x < (item.x + item.width) &&
+                           y > item.y && y < (item.y + item.height);
+                }
+
+                onDoubleClicked: {
+                    musicPlayer.curMusic = modelData;
+                    musicPlayer.play(modelData.filename)
+                }
+                onEntered: {
+                    parent.hovered = true;
+                    parent.color = root.headerColor;
+                }
+                onExited: {
+                    parent.hovered = false;
+                    parent.color = "transparent";
+                }
+                onPositionChanged: {
+                    let pos = Qt.point(mouse.x, mouse.y);
+
+                    if (contains(titleItem, mouse.x, mouse.y)) {
+                        musicTooltip.text = musicTitle.text;
+                    } else if (contains(singerItem, mouse.x, mouse.y)) {
+                        musicTooltip.text = musicSinger.text;
+                    } else if (contains(albumItem, mouse.x, mouse.y)) {
+                        musicTooltip.text = musicAlbum.text;
+                    } else if (contains(durationItem, mouse.x, mouse.y)) {
+                        musicTooltip.text = musicDuration.text;
+                    } else return;
+
+                    musicTooltip.x = (mouse.x + musicTooltip.width) > parent.width ?
+                                     parent.width - musicTooltip.width : mouse.x;
+                    musicTooltip.visibleChanged();
+                }
+            }
+
+            Widgets.ToolTip {
+                id: musicTooltip
+                visible: parent.hovered
+            }
+
+            FontMetrics {
+                id: fontMetrics
+                font.pointSize: 11
+            }
 
             Item {
+                id: titleItem
+                anchors.left: parent.left
                 height: 30
-                width: parent.width / 4 - parent.spacing
+                width: parent.width / 4
 
                 Text {
+                    id: musicTitle
                     clip: true
                     height: 30
-                    width: parent.width - 20
+                    width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
+                    color: modelData == musicPlayer.curMusic ? "white" : "black"
                     font.pointSize: 11
+                    elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: fontMetrics.advanceWidth(text) > width ? Text.AlignLeft : Text.AlignHCenter
                     text: qsTr(modelData.title)
@@ -215,15 +260,20 @@ ListView {
             }
 
             Item {
+                id: singerItem
+                anchors.left: titleItem.right
                 height: 30
-                width: parent.width / 4 - parent.spacing
+                width: parent.width / 4
 
                 Text {
+                    id: musicSinger
                     clip: true
                     height: 30
-                    width: parent.width - 20
+                    width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
+                    color: modelData == musicPlayer.curMusic ? "white" : "black"
                     font.pointSize: 11
+                    elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: fontMetrics.advanceWidth(text) > width ? Text.AlignLeft : Text.AlignHCenter
                     text: qsTr(modelData.singer)
@@ -231,15 +281,20 @@ ListView {
             }
 
             Item {
+                id: albumItem
+                anchors.left: singerItem.right
                 height: 30
-                width: parent.width / 4 - parent.spacing
+                width: parent.width / 4
 
                 Text {
+                    id: musicAlbum
                     clip: true
                     height: 30
-                    width: parent.width - 20
+                    width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
+                    color: modelData == musicPlayer.curMusic ? "white" : "black"
                     font.pointSize: 11
+                    elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: fontMetrics.advanceWidth(text) > width ? Text.AlignLeft : Text.AlignHCenter
                     text: qsTr(modelData.album)
@@ -247,14 +302,18 @@ ListView {
             }
 
             Item {
+                id: durationItem
+                anchors.left: albumItem.right
                 height: 30
                 width: parent.width / 4
 
                 Text {
+                    id: musicDuration
                     clip: true
                     height: 30
-                    width: parent.width - 20
+                    width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
+                    color: modelData == musicPlayer.curMusic ? "white" : "black"
                     font.pointSize: 11
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
@@ -263,4 +322,18 @@ ListView {
             }
         }
     }
+
+    ListView {
+        id: musicListView
+        anchors.top: headerItem.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        clip: true
+        spacing: 4
+        model: musicPlayer.music.model
+        delegate: delegate
+        ScrollBar.vertical: ScrollBar { }
+    }
 }
+
