@@ -1,6 +1,9 @@
 #include "audiodecoder.h"
 #include "imageprovider.h"
+#include "lrcdecoder.h"
+#include "lyricsmodel.h"
 #include "musicplayer.h"
+#include "musicmodel.h"
 
 #include <QDebug>
 #include <QAudioOutput>
@@ -27,8 +30,10 @@ static QHash<QString, bool> SubtitleFormat =
 class MusicPlayerPrivate
 {
 public:
-    bool m_running = false;
-    QUrl m_curMusic = QUrl();
+    bool m_playing = false;
+    bool m_decoding = false;
+    MusicPlayer::PlayMode m_playMode = MusicPlayer::PlayMode::Order;
+    MusicData* m_curMusic = nullptr;
     qreal m_progress = 0.0;
     qreal m_duration = 0.0;
     int m_volume = 100;
@@ -49,23 +54,49 @@ public:
     int m_nextIndex = 0;
     /** @note 用于去重 */
     QHash<QString, bool> m_files;
+    ImageProvider *m_playbillProvider;
 
-    bool contains(const QString &filename) {
-        if (m_files.value(filename)) {
-            return true;
-        }
-        else {
-            m_files[filename] = true;
-            return false;
+    bool contains(const QString &filename);
+    void loadLyrics(const QString &filename);
+};
+
+bool MusicPlayerPrivate::contains(const QString &filename)
+{
+    if (m_files.value(filename)) {
+        return true;
+    } else {
+        m_files[filename] = true;
+        return false;
+    }
+}
+
+void MusicPlayerPrivate::loadLyrics(const QString &lrcFile)
+{
+    if (QFileInfo::exists(lrcFile)) {
+        if (m_lrcDecoder->decode(lrcFile.toLocal8Bit().data())) {
+            //创建Model
+            QVector<LyricData *> model;
+            lyricPacket packet = m_lrcDecoder->readPacket();
+            while (!packet.isEmpty()) {
+                LyricData *data = new LyricData(QString::fromStdString(packet.lyric), packet.pts);
+                model.append(data);
+                packet = m_lrcDecoder->readPacket();
+            }
+            if (model.count() > 0) {
+                m_lyricsModel->setModel(model);
+                m_hasLyrics = true;
+                if ((m_nextIndex + 1) < m_lyricsModel->count()) m_nextIndex++;
+                //打印LRC元数据
+                m_lrcDecoder->dumpMetadata(stdout);
+            }
         }
     }
-
-    ImageProvider *m_playbillProvider;
-};
+}
 
 MusicPlayer::MusicPlayer(QObject *parent)
     : QObject (parent)
 {
+    qsrand(uint(time(nullptr)));
     d = new MusicPlayerPrivate;
 
     d->m_playbillProvider = new ImageProvider;
@@ -83,11 +114,13 @@ MusicPlayer::MusicPlayer(QObject *parent)
         emit playbillChanged();
     });
     connect(d->m_decoder, &AudioDecoder::resolved, this, [this]() {
-        d->m_running = true;
+        d->m_playing = true;
+        d->m_decoding = true;
         d->m_title = d->m_decoder->title();
         d->m_singer = d->m_decoder->singer();
         d->m_album = d->m_decoder->album();
         d->m_duration = d->m_decoder->duration();
+        emit playingChanged();
         emit titleChanged();
         emit singerChanged();
         emit albumChanged();
@@ -111,19 +144,6 @@ ImageProvider *MusicPlayer::imageProvider()
     return d->m_playbillProvider;
 }
 
-QUrl MusicPlayer::curMusic() const
-{
-    return d->m_curMusic;
-}
-
-void MusicPlayer::setCurMusic(const QUrl &url)
-{
-    if (url != d->m_curMusic) {
-        d->m_curMusic = url;
-        emit curMusicChanged();
-    }
-}
-
 qreal MusicPlayer::progress() const
 {
     return d->m_progress;
@@ -131,7 +151,7 @@ qreal MusicPlayer::progress() const
 
 void MusicPlayer::setProgress(qreal ratio)
 {
-    if (d->m_running && qAbs(ratio - d->m_progress) > 0.000001) {
+    if (d->m_decoding && qAbs(ratio - d->m_progress) > 0.000001) {
         d->m_progress = ratio;
         d->m_audioBuffer.clear();
         emit progressChanged();
@@ -142,13 +162,31 @@ void MusicPlayer::setProgress(qreal ratio)
             for (int i = 0; i < count; i++) {
                 if (d->m_lyricsModel->at(i)->pts() > pts) {
                     d->m_lyricIndex = (i > 0) ? (i - 1) : 0;
-                    d->m_nextIndex = (d->m_lyricIndex + 1) < count ? d->m_lyricIndex + 1 : count;
+                    d->m_nextIndex = (d->m_lyricIndex + 1) < count ? d->m_lyricIndex + 1 : d->m_lyricIndex;
                     emit lyricIndexChanged();
                     break;
                 }
             }
         }
     }
+}
+
+MusicPlayer::PlayMode MusicPlayer::playMode() const
+{
+    return d->m_playMode;
+}
+
+void MusicPlayer::setPlayMode(MusicPlayer::PlayMode mode)
+{
+    if (mode != d->m_playMode) {
+        d->m_playMode = mode;
+        emit playModeChanged();
+    }
+}
+
+bool MusicPlayer::playing() const
+{
+    return d->m_playing;
 }
 
 int MusicPlayer::volume() const
@@ -170,11 +208,6 @@ void MusicPlayer::setVolume(int vol)
 qreal MusicPlayer::duration() const
 {
     return d->m_duration;
-}
-
-bool MusicPlayer::running() const
-{
-    return d->m_running;
 }
 
 QString MusicPlayer::title() const
@@ -207,58 +240,115 @@ MusicModel* MusicPlayer::music() const
     return d->m_musicModel;
 }
 
+MusicData* MusicPlayer::curMusic() const
+{
+    return d->m_curMusic;
+}
+
+void MusicPlayer::setCurMusic(MusicData *music)
+{
+    if (d->m_curMusic != music) {
+        d->m_curMusic = music;
+        emit curMusicChanged();
+    }
+}
+
 void MusicPlayer::play(const QUrl &url)
 {
     suspend();
-    setCurMusic(url);
-    d->m_running = false;
+    d->m_playing = false;
+    d->m_decoding = false;
     d->m_progress = 0.0;
-    emit progressChanged();
     d->m_audioBuffer.clear();
     d->m_hasLyrics = false;
     d->m_playbillProvider->setImage(QImage(":/image/music.png"));
+    emit progressChanged();
     emit playbillChanged();
 
     QString filename = url.toLocalFile();
     d->m_decoder->open(filename);
 
+    d->m_lyricsModel->clear();
     d->m_lyricIndex = 0;
     d->m_nextIndex = 0;
     int suffixLength = QFileInfo(filename).suffix().length();
     QString lrcFile = filename.mid(0, filename.length() - suffixLength - 1) + ".lrc";
-    if (QFileInfo::exists(lrcFile)) {
-        if (d->m_lrcDecoder->decode(lrcFile.toLocal8Bit().data())) {
-            //创建Model
-            QVector<LyricData *> model;
-            lyricPacket packet = d->m_lrcDecoder->readPacket();
-            while (!packet.isEmpty()) {
-                LyricData *data = new LyricData(QString::fromStdString(packet.lyric), packet.pts);
-                model.append(data);
-                packet = d->m_lrcDecoder->readPacket();
-            }
-            d->m_lyricsModel->setModel(model);
-            d->m_hasLyrics = true;
-            if (d->m_nextIndex + 1 < d->m_lyricsModel->count()) d->m_nextIndex++;
-            //打印LRC元数据
-            d->m_lrcDecoder->dumpMetadata(stdout);
-        }
-    }
+    d->loadLyrics(lrcFile);
 }
 
 void MusicPlayer::suspend()
 {
-    if(d->m_playTimer->isActive())
+    if(d->m_playTimer->isActive()) {
         d->m_playTimer->stop();
+        d->m_playing = false;
+        emit playingChanged();
+    }
 }
 
 void MusicPlayer::resume()
 {
-    if (d->m_running) d->m_playTimer->start(100);
-    else if (!d->m_curMusic.isEmpty()) play(d->m_curMusic);
+    if (d->m_decoding) {
+        d->m_playTimer->start(100);
+        d->m_playing = true;
+        emit playingChanged();
+    } else if (d->m_curMusic) {
+        play(d->m_curMusic->filename());
+    }
+}
+
+void MusicPlayer::playPrev()
+{
+    int index = d->m_musicModel->indexof(d->m_curMusic);
+
+    if (index == -1) return;
+
+    switch (d->m_playMode) {
+    case PlayMode::Order:
+    case PlayMode::Single:
+        if (index == 0) {
+            index = d->m_musicModel->count() - 1;
+        } else {
+            index--;
+        }
+        break;
+    case PlayMode::Random:
+        index = qrand() % d->m_musicModel->count();
+        break;
+    }
+
+    MusicData *music = d->m_musicModel->at(index);
+    setCurMusic(music);
+    play(music->filename());
+}
+
+void MusicPlayer::playNext()
+{
+    int index = d->m_musicModel->indexof(d->m_curMusic);
+
+    if (index == -1) return;
+
+    switch (d->m_playMode) {
+    case PlayMode::Order:
+    case PlayMode::Single:
+        if (index == (d->m_musicModel->count() - 1)) {
+            index = 0;
+        } else {
+            index++;
+        }
+        break;
+    case PlayMode::Random:
+        index = qrand() % d->m_musicModel->count();
+        break;
+    }
+
+    MusicData *music = d->m_musicModel->at(index);
+    setCurMusic(music);
+    play(music->filename());
 }
 
 void MusicPlayer::addMusicList(const QList<QUrl> &urls)
 {
+    bool init = false;
     for (auto url: urls) {
         QString filename = url.toLocalFile();
         if (!SubtitleFormat.value(QFileInfo(filename).suffix())) {
@@ -266,7 +356,14 @@ void MusicPlayer::addMusicList(const QList<QUrl> &urls)
                 continue;
             } else {
                 MusicData *data = MusicData::create(url, this);
-                if (data) d->m_musicModel->append(data);
+                if (data) {
+                    if (!init) {
+                        init = true;
+                        setCurMusic(data);
+                        play(data->filename());
+                    }
+                    d->m_musicModel->append(data);
+                }
             }
         }
     }
@@ -282,10 +379,12 @@ void MusicPlayer::update()
         qreal currentTime = packet.time;
         if (currentTime >= d->m_duration || (data.isEmpty() && currentTime < 0.00000001)) {
             d->m_progress = 1.0;
-            d->m_running = false;
+            d->m_playing = false;
+            d->m_decoding = false;
             d->m_decoder->stop();
             d->m_playTimer->stop();
             emit finished();
+            emit playingChanged();
             emit progressChanged();
             return;
         } else {
