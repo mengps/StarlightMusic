@@ -4,8 +4,10 @@ CONFIG += c++11 debug_and_release
 
 CONFIG(debug, debug|release) {
     DEFINES += NO_BUFFER_OUTPUT
+    DESTDIR = $$shell_path(./debug)
 } else {
     DEFINES += NO_BUFFER_OUTPUT
+    DESTDIR = $$shell_path(./release)
 }
 
 INCLUDEPATH += $$PWD/ffmpeg/include
@@ -16,6 +18,12 @@ LIBS += -L$$PWD/ffmpeg/lib \
         -lavutil \
         -lswscale \
         -lswresample \
+
+win32 {
+    ffmpeg_dll = $$shell_path($$PWD/ffmpeg/dll)
+    QMAKE_POST_LINK = \
+        copy $$ffmpeg_dll $$DESTDIR
+}
 
 RC_ICONS += image/music.ico
 
@@ -37,7 +45,8 @@ HEADERS += \
     src/lrcdecoder.h \
     src/lyricsmodel.h \
     src/musicmodel.h \
-    src/musicplayer.h
+    src/musicplayer.h \
+    src/skinmanager.h
 
 SOURCES += \
     src/audiodecoder.cpp \
@@ -46,17 +55,12 @@ SOURCES += \
     src/lyricsmodel.cpp \
     src/main.cpp \
     src/musicmodel.cpp \
-    src/musicplayer.cpp
+    src/musicplayer.cpp \
+    src/skinmanager.cpp
 
 RESOURCES += \
     qml.qrc \
     image.qrc
-
-# Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
-
-# Additional import path used to resolve QML modules just for Qt Quick Designer
-QML_DESIGNER_IMPORT_PATH =
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
