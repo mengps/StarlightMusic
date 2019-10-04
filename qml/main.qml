@@ -232,7 +232,7 @@ Window {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         font.pointSize: 12
-        text: "00:00 / 00:00"
+        Component.onCompleted: text = "00:00 / " + duration;
         property string duration: Api.time2string(musicPlayer.duration)
 
         function update() {
@@ -422,5 +422,6 @@ Window {
             if (value == 0) volumeButton.setMute();
             else volumeButton.setUnmute();
         }
+        Component.onCompleted: value = musicPlayer.volume;
     }
 }

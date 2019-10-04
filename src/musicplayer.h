@@ -99,6 +99,9 @@ signals:
 private slots:
     void update();
 
+    void readSettings();
+    void writeSettings();
+
 private:
     MusicPlayerPrivate *d = nullptr;
 };

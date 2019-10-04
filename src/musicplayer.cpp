@@ -7,8 +7,11 @@
 
 #include <QDebug>
 #include <QAudioOutput>
+#include <QDir>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QHash>
+#include <QSettings>
 #include <QTimer>
 #include <QUrl>
 
@@ -35,11 +38,7 @@ public:
     MusicPlayer::PlayMode m_playMode = MusicPlayer::PlayMode::Order;
     MusicData* m_curMusic = nullptr;
     qreal m_progress = 0.0;
-    qreal m_duration = 0.0;
     int m_volume = 100;
-    QString m_title = QString();
-    QString m_singer = QString();
-    QString m_album = QString();
     QByteArray m_audioBuffer = QByteArray();
     QTimer *m_playTimer = nullptr;
     QScopedPointer<QAudioOutput> m_audioOutput;
@@ -54,6 +53,7 @@ public:
     int m_nextIndex = 0;
     /** @note 用于去重 */
     QHash<QString, bool> m_files;
+    QSettings *m_settings = nullptr;
     ImageProvider *m_playbillProvider;
 
     bool contains(const QString &filename);
@@ -115,27 +115,24 @@ MusicPlayer::MusicPlayer(QObject *parent)
     });
     connect(d->m_decoder, &AudioDecoder::resolved, this, [this]() {
         d->m_playing = true;
-        d->m_decoding = true;
-        d->m_title = d->m_decoder->title();
-        d->m_singer = d->m_decoder->singer();
-        d->m_album = d->m_decoder->album();
-        d->m_duration = d->m_decoder->duration();
+        d->m_decoding = true;        
         emit playingChanged();
-        emit titleChanged();
-        emit singerChanged();
-        emit albumChanged();
-        emit durationChanged();
 
         d->m_audioOutput.reset(new QAudioOutput(d->m_decoder->format()));
         d->m_audioDevice = d->m_audioOutput->start();
         d->m_audioOutput->setVolume(d->m_volume / qreal(100.0));
         d->m_playTimer->start(100);
     });
+
+    d->m_settings = new QSettings(qApp->applicationDirPath() + "/Settings/settings.ini",
+                                  QSettings::IniFormat, this);
+    readSettings();
 }
 
 MusicPlayer::~MusicPlayer()
 {
     suspend();
+    writeSettings();
     delete d;
 }
 
@@ -160,7 +157,7 @@ void MusicPlayer::setProgress(qreal ratio)
         emit progressChanged();
         d->m_decoder->setProgress(ratio);
         if (d->m_hasLyrics) {
-            int64_t pts = int64_t(ratio * d->m_duration * 1000);
+            int64_t pts = int64_t(ratio * duration() * 1000);
             int count = d->m_lyricsModel->count();
             for (int i = 0; i < count; i++) {
                 if (d->m_lyricsModel->at(i)->pts() > pts) {
@@ -210,22 +207,26 @@ void MusicPlayer::setVolume(int vol)
 
 qreal MusicPlayer::duration() const
 {
-    return d->m_duration;
+    if (d->m_curMusic) return d->m_curMusic->duration();
+    else return 0.0;
 }
 
 QString MusicPlayer::title() const
 {
-    return d->m_title;
+    if (d->m_curMusic) return d->m_curMusic->title();
+    else return QString();
 }
 
 QString MusicPlayer::singer() const
 {
-    return d->m_singer;
+    if (d->m_curMusic) return d->m_curMusic->singer();
+    else return QString();
 }
 
 QString MusicPlayer::album() const
 {
-    return d->m_album;
+    if (d->m_curMusic) return d->m_curMusic->album();
+    else return QString();
 }
 
 int MusicPlayer::lyricIndex() const
@@ -253,6 +254,10 @@ void MusicPlayer::setCurMusic(MusicData *music)
     if (d->m_curMusic != music) {
         d->m_curMusic = music;
         emit curMusicChanged();
+        emit titleChanged();
+        emit singerChanged();
+        emit albumChanged();
+        emit durationChanged();
     }
 }
 
@@ -382,7 +387,7 @@ void MusicPlayer::update()
         AudioPacket packet = d->m_decoder->currentPacket();
         QByteArray data = packet.data;
         qreal currentTime = packet.time;
-        if (currentTime >= d->m_duration || (data.isEmpty() && currentTime < 0.00000001)) {
+        if (currentTime >= duration() || (data.isEmpty() && currentTime < 0.00000001)) {
             d->m_progress = 1.0;
             d->m_playing = false;
             d->m_decoding = false;
@@ -401,7 +406,7 @@ void MusicPlayer::update()
                     emit lyricIndexChanged();
                 }
             }
-            d->m_progress = currentTime / d->m_duration;
+            d->m_progress = currentTime / duration();
             emit progressChanged();
         }
 
@@ -418,5 +423,55 @@ void MusicPlayer::update()
 
         if (size) d->m_audioDevice->write(pcm);
         if (size != readSize) break;
+    }
+}
+
+void MusicPlayer::readSettings()
+{
+    if (d->m_settings->status() == QSettings::NoError) {
+        d->m_settings->beginGroup("MusicPlayer");
+        setVolume(d->m_settings->value("Volume", 100).toInt());
+        QUrl curMusic = d->m_settings->value("CurMusic").toUrl();
+        int size = d->m_settings->beginReadArray("MusicList");
+        QList<QUrl> musiclist;
+        for (int i = 0; i < size; i++) {
+           d->m_settings->setArrayIndex(i);
+           musiclist << d->m_settings->value("filename").toUrl();
+        }
+        for (auto url: musiclist) {
+            QString filename = url.toLocalFile();
+            if (!SubtitleFormat.value(QFileInfo(filename).suffix())) {
+                if (d->contains(filename)) {
+                    continue;
+                } else {
+                    MusicData *data = MusicData::create(url, this);
+                    if (data) {
+                        d->m_musicModel->append(data);
+                        if (url == curMusic) {
+                            setCurMusic(data);
+                        }
+                    }
+                }
+            }
+        }
+        emit d->m_musicModel->modelChanged();
+        d->m_settings->endArray();
+        d->m_settings->endGroup();
+    }
+}
+
+void MusicPlayer::writeSettings()
+{
+    if (d->m_settings->status() == QSettings::NoError) {
+        d->m_settings->beginGroup("MusicPlayer");
+        d->m_settings->setValue("Volume", d->m_volume);
+        if (d->m_curMusic) d->m_settings->setValue("CurMusic", d->m_curMusic->filename());
+        d->m_settings->beginWriteArray("MusicList");
+        for (int i = 0; i < d->m_musicModel->count(); i++) {
+           d->m_settings->setArrayIndex(i);
+           d->m_settings->setValue("filename", d->m_musicModel->at(i)->filename());
+        }
+        d->m_settings->endArray();
+        d->m_settings->endGroup();
     }
 }
