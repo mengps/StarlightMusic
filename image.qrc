@@ -18,5 +18,8 @@
         <file>image/Player/content.png</file>
         <file>image/Player/history.png</file>
         <file>image/Player/skin.png</file>
+        <file>image/Player/order.png</file>
+        <file>image/Player/random.png</file>
+        <file>image/Player/single.png</file>
     </qresource>
 </RCC>
