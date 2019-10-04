@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<LyricsModel>("an.lyrics.model", 1, 0, "LyricsModel");
     qmlRegisterType<MusicData>("an.music.model", 1, 0, "MusicData");
     qmlRegisterType<MusicModel>("an.music.model", 1, 0, "MusicModel");
+    qmlRegisterType<MusicPlayer>("an.music", 1, 0, "MusicPlayer");
 
     //给它一个parent
     MusicPlayer *musicPlayer = new MusicPlayer(qApp);

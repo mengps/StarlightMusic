@@ -151,7 +151,10 @@ qreal MusicPlayer::progress() const
 
 void MusicPlayer::setProgress(qreal ratio)
 {
-    if (d->m_decoding && qAbs(ratio - d->m_progress) > 0.000001) {
+    if (d->m_decoding && qAbs(ratio - d->m_progress) > 0.0000001) {
+        if (d->m_progress > 0.9999999){
+            emit finished();
+        }
         d->m_progress = ratio;
         d->m_audioBuffer.clear();
         emit progressChanged();
@@ -304,12 +307,13 @@ void MusicPlayer::playPrev()
 
     switch (d->m_playMode) {
     case PlayMode::Order:
-    case PlayMode::Single:
         if (index == 0) {
             index = d->m_musicModel->count() - 1;
         } else {
             index--;
         }
+        break;
+    case PlayMode::Single:
         break;
     case PlayMode::Random:
         index = qrand() % d->m_musicModel->count();
@@ -329,12 +333,13 @@ void MusicPlayer::playNext()
 
     switch (d->m_playMode) {
     case PlayMode::Order:
-    case PlayMode::Single:
         if (index == (d->m_musicModel->count() - 1)) {
             index = 0;
         } else {
             index++;
         }
+        break;
+    case PlayMode::Single:
         break;
     case PlayMode::Random:
         index = qrand() % d->m_musicModel->count();
