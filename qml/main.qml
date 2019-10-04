@@ -1,11 +1,13 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Window 2.12
+import an.music 1.0
 import "Api/Api.js" as Api
 import "Effects" as Effects
 import "Widgets" as Widgets
 import "DetailPanel"
 import "MenuPanel"
+import "MainPanel"
 
 Window {
     id: mainPanel
@@ -289,7 +291,10 @@ Window {
                 if (playButton.state == "pausing" && musicPlayer.playing)
                     playButton.state = "playing";
             }
-            onFinished: playButton.state = "pausing";
+            onFinished: {
+                playButton.state = "pausing";
+                musicPlayer.playNext();
+            }
         }
 
         NumberAnimation {
@@ -341,9 +346,38 @@ Window {
     }
 
     Widgets.Button {
-        id: volumeButton
+        id: loopButton
         anchors.verticalCenter: playButton.verticalCenter
         anchors.left: nextButton.right
+        anchors.leftMargin: 24
+        source: {
+            if (musicPlayer.playMode == MusicPlayer.Single)
+                return "qrc:/image/Player/single.png";
+            else if (musicPlayer.playMode == MusicPlayer.Random)
+                return "qrc:/image/Player/random.png";
+            else return "qrc:/image/Player/order.png";
+        }
+        width: 22
+        height: 22
+        color: mainPanel.globalColor
+        toolTip: {
+            if (musicPlayer.playMode == MusicPlayer.Single)
+                return "单曲循环";
+            else if (musicPlayer.playMode == MusicPlayer.Random)
+                return "随机循环";
+            else return "顺序循环";
+        }
+        onClicked: loopMenu.open();
+
+        LoopMenu {
+            id: loopMenu
+        }
+    }
+
+    Widgets.Button {
+        id: volumeButton
+        anchors.verticalCenter: playButton.verticalCenter
+        anchors.left: loopButton.right
         anchors.leftMargin: 24
         source: "qrc:/image/Player/volume.png"
         width: 22

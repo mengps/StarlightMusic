@@ -1,7 +1,7 @@
 import QtQuick 2.12
-import "Api/Api.js" as Api
-import "Effects" as Effects
-import "Widgets" as Widgets
+import "../Api/Api.js" as Api
+import "../Effects" as Effects
+import "../Widgets" as Widgets
 
 Item {
     id: root

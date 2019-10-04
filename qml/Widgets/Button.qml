@@ -30,7 +30,7 @@ Widgets.ColorImage {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: parent
-        onClicked: root.clicked();
+        onClicked: root.clicked(mouse);
         onEntered: {
             root.hovered = true;
             cursorShape = Qt.PointingHandCursor;
