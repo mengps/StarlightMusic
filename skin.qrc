@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+    <file>skin/default_black.skin</file>
+    <file>skin/default_white.skin</file>
+    </qresource>
+</RCC>

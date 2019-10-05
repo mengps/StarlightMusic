@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE default_black>
+<default_black>
+    <color title="globalColor">#000000</color>
+    <color title="detailColor">#66333333</color>
+    <color title="borderColor">#DDDDDD</color>
+
+    <color title="progressColor">#4DFFD0</color>
+    <color title="progressBackColor">#888888</color>
+    <color title="progressHandleColor">#CCCCCC</color>
+
+    <color title="menuColor">#CCCCCC</color>
+    <color title="menuHoverColor">#88444444</color>
+    <color title="menuBackColor">#881D1D1D</color>
+
+    <color title="headerColor">#88999999</color>
+    <color title="headerHoverColor">#88636363</color>
+    <color title="headerBorderColor">#CCCCCC</color>
+
+    <color title="buttonColor">#CCCCCC</color>
+    <color title="buttonBackColor">#CCCCCC</color>
+
+    <color title="tooltipColor">#CCCCCCCC</color>
+    <color title="tooltipBorderColor">#888888</color>
+
+    <color title="textColor">#FFFFFF</color>
+    <color title="musicTextColor">#FFFFFF</color>
+    <color title="musicTextSelectedColor">#CD803A</color>
+
+    <image title="backgroundImage">qrc:///image/background.jpg</image>
+    <image title="progressHandleImage">qrc:///image/handle.png</image>
+
+    <image title="buttonParticleImage">qrc:///image/ParticleImage/circle.png</image>
+    <image title="progressParticleImage">qrc:///image/ParticleImage/star.png</image>
+</default_black>
