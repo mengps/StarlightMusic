@@ -1,7 +1,9 @@
+#include "fileapi.h"
 #include "imageprovider.h"
 #include "lyricsmodel.h"
 #include "musicmodel.h"
 #include "musicplayer.h"
+#include "skinmanager.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -22,7 +24,9 @@ int main(int argc, char *argv[])
     MusicPlayer *musicPlayer = new MusicPlayer(qApp);
     QQmlApplicationEngine engine;
     engine.addImageProvider("playbill", musicPlayer->imageProvider());
+    engine.rootContext()->setContextProperty("fileApi", new FileApi(qApp));
     engine.rootContext()->setContextProperty("musicPlayer", musicPlayer);
+    engine.rootContext()->setContextProperty("skinManager", SkinManager::instance());
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {

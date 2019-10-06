@@ -4,6 +4,7 @@
 #include "lyricsmodel.h"
 #include "musicplayer.h"
 #include "musicmodel.h"
+#include "skinmanager.h"
 
 #include <QDebug>
 #include <QAudioOutput>
@@ -37,8 +38,9 @@ public:
     bool m_decoding = false;
     MusicPlayer::PlayMode m_playMode = MusicPlayer::PlayMode::Order;
     MusicData* m_curMusic = nullptr;
+    QString m_skinName = QString();
     qreal m_progress = 0.0;
-    int m_volume = 100;
+    int m_volume = 80;
     QByteArray m_audioBuffer = QByteArray();
     QTimer *m_playTimer = nullptr;
     QScopedPointer<QAudioOutput> m_audioOutput;
@@ -261,6 +263,21 @@ void MusicPlayer::setCurMusic(MusicData *music)
     }
 }
 
+QString MusicPlayer::skinName() const
+{
+    return d->m_skinName;
+}
+
+void MusicPlayer::setSkinName(const QString &name)
+{
+    if (name != d->m_skinName) {
+        if (SkinManager::instance()->loadSkin(name)){
+            d->m_skinName = name;
+            emit skinNameChanged();
+        }
+    }
+}
+
 void MusicPlayer::play(const QUrl &url)
 {
     suspend();
@@ -430,7 +447,7 @@ void MusicPlayer::readSettings()
 {
     if (d->m_settings->status() == QSettings::NoError) {
         d->m_settings->beginGroup("MusicPlayer");
-        setVolume(d->m_settings->value("Volume", 100).toInt());
+        setSkinName(d->m_settings->value("SkinName", ":/skin/default_black.skin").toString());
         QUrl curMusic = d->m_settings->value("CurMusic").toUrl();
         int size = d->m_settings->beginReadArray("MusicList");
         QList<QUrl> musiclist;
@@ -464,7 +481,7 @@ void MusicPlayer::writeSettings()
 {
     if (d->m_settings->status() == QSettings::NoError) {
         d->m_settings->beginGroup("MusicPlayer");
-        d->m_settings->setValue("Volume", d->m_volume);
+        d->m_settings->setValue("SkinName", d->m_skinName);
         if (d->m_curMusic) d->m_settings->setValue("CurMusic", d->m_curMusic->filename());
         d->m_settings->beginWriteArray("MusicList");
         for (int i = 0; i < d->m_musicModel->count(); i++) {

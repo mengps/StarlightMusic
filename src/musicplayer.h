@@ -18,6 +18,7 @@ class MusicPlayer : public QObject
     Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
     Q_PROPERTY(PlayMode playMode READ playMode WRITE setPlayMode NOTIFY playModeChanged)
     Q_PROPERTY(MusicData* curMusic READ curMusic WRITE setCurMusic NOTIFY curMusicChanged)
+    Q_PROPERTY(QString skinName READ skinName WRITE setSkinName NOTIFY skinNameChanged)
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(QString singer READ singer NOTIFY singerChanged)
@@ -55,6 +56,9 @@ public:
     MusicData* curMusic() const;
     void setCurMusic(MusicData *music);
 
+    QString skinName() const;
+    void setSkinName(const QString &name);
+
     bool playing() const;
     qreal duration() const;
     QString title() const;
@@ -83,6 +87,7 @@ signals:
 
     void finished();
     void curMusicChanged();
+    void skinNameChanged();
     void progressChanged();
     void volumeChanged();
     void playModeChanged();
