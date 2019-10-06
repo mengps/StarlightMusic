@@ -2,22 +2,22 @@
 <!DOCTYPE default_white>
 <default_white>
     <color title="globalColor">#FFFFFF</color>
-    <color title="detailColor">#88CCCCCC</color>
+    <color title="detailColor">#90EEEEEE</color>
     <color title="borderColor">#888888</color>
 
     <color title="progressColor">#4DFFD0</color>
-    <color title="progressBackColor">#777777</color>
-    <color title="progressHandleColor">#555555</color>
+    <color title="progressBackColor">#333333</color>
+    <color title="progressHandleColor">#444444</color>
 
-    <color title="menuColor">#555555</color>
-    <color title="menuHoverColor">#88CCCCCC</color>
-    <color title="menuBackColor">#88EEEEEE</color>
+    <color title="menuColor">#333333</color>
+    <color title="menuHoverColor">#A0BABABA</color>
+    <color title="menuBackColor">#70D2D2D2</color>
 
-    <color title="headerColor">#88AAAAAA</color>
-    <color title="headerHoverColor">#88888888</color>
-    <color title="headerBorderColor">#555555</color>
+    <color title="headerColor">#88EEEEEE</color>
+    <color title="headerHoverColor">#A0AAAAAA</color>
+    <color title="headerBorderColor">#444444</color>
 
-    <color title="buttonColor">#555555</color>
+    <color title="buttonColor">#444444</color>
     <color title="buttonBackColor">#888888</color>
 
     <color title="tooltipColor">#CCFFFFFF</color>
@@ -25,9 +25,9 @@
 
     <color title="textColor">#000000</color>
     <color title="musicTextColor">#000000</color>
-    <color title="musicTextSelectedColor">#EC1C24</color>
+    <color title="musicTextSelectedColor">#762877</color>
 
-    <image title="backgroundImage"></image>
+    <image title="backgroundImage">qrc:///image/background_white.jpg</image>
     <image title="progressHandleImage">qrc:///image/handle.png</image>
 
     <image title="buttonParticleImage">qrc:///image/ParticleImage/circle.png</image>
