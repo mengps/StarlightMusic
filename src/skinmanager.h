@@ -54,7 +54,7 @@ public:
     static SkinManager* instance();
     ~SkinManager();
 
-    Q_INVOKABLE void loadSkin(const QString &skinName);
+    bool loadSkin(const QString &skinName);
 
 private:
     SkinManager();

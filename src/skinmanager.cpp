@@ -21,12 +21,12 @@ SkinManager::~SkinManager()
  *   globalColorRead();
  *   menuColorRead();
  */
-void SkinManager::loadSkin(const QString &skinName)
+bool SkinManager::loadSkin(const QString &skinName)
 {
     QFile file(skinName);
     if (!file.open(QIODevice::ReadOnly)) {
         qDebug() << file.errorString();
-        return;
+        return false;
     }
 
     m_reader.setDevice(&file);
@@ -50,9 +50,10 @@ void SkinManager::loadSkin(const QString &skinName)
     }
 
     file.close();
+    return true;
 }
 
 SkinManager::SkinManager()
 {
-    loadSkin(":/skin/default_black.skin");
+
 }
