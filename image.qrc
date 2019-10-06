@@ -2,7 +2,9 @@
     <qresource prefix="/">
         <file>image/music.png</file>
         <file>image/handle.png</file>
-        <file>image/background.jpg</file>
+        <file>image/background_black.jpg</file>
+        <file>image/background_white.jpg</file>
+        <file>image/background_blue.jpg</file>
         <file>image/ParticleImage/star.png</file>
         <file>image/ParticleImage/circle.png</file>
         <file>image/Player/play.png</file>
@@ -21,5 +23,7 @@
         <file>image/Player/order.png</file>
         <file>image/Player/random.png</file>
         <file>image/Player/single.png</file>
+        <file>image/skinSelected.png</file>
+        <file>image/Player/add.png</file>
     </qresource>
 </RCC>

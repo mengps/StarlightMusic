@@ -16,5 +16,6 @@
         <file>qml/MenuPanel/MenuPanel.qml</file>
         <file>qml/MenuPanel/MenuButton.qml</file>
         <file>qml/MenuPanel/MusicList.qml</file>
+        <file>qml/MenuPanel/SkinList.qml</file>
     </qresource>
 </RCC>

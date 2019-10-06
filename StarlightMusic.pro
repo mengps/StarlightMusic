@@ -17,7 +17,7 @@ LIBS += -L$$PWD/ffmpeg/lib \
         -lavformat \
         -lavutil \
         -lswscale \
-        -lswresample \
+        -lswresample
 
 win32 {
     ffmpeg_dll = $$shell_path($$PWD/ffmpeg/dll)
@@ -41,6 +41,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 HEADERS += \
     src/audiodecoder.h \
     src/bufferqueue.h \
+    src/fileapi.h \
     src/imageprovider.h \
     src/lrcdecoder.h \
     src/lyricsmodel.h \
@@ -50,6 +51,7 @@ HEADERS += \
 
 SOURCES += \
     src/audiodecoder.cpp \
+    src/fileapi.cpp \
     src/imageprovider.cpp \
     src/lrcdecoder.cpp \
     src/lyricsmodel.cpp \
@@ -60,7 +62,8 @@ SOURCES += \
 
 RESOURCES += \
     qml.qrc \
-    image.qrc
+    image.qrc \
+    skin.qrc
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
