@@ -5,6 +5,7 @@ import "../Widgets" as Widgets
 Rectangle {
     id: root
     clip: true
+    color: skinManager.detailColor
     property bool isVisiable: false
 
     function display() {
@@ -46,7 +47,7 @@ Rectangle {
         source: "qrc:/image/Player/shrink.png"
         width: 30
         height: 30
-        color: mainPanel.globalColor
+        color: skinManager.buttonColor
         toolTip: qsTr("收起详情")
         visible: root.isVisiable
         onClicked: root.hide();
@@ -81,7 +82,7 @@ Rectangle {
         anchors.rightMargin: 50
         anchors.top: parent.top
         anchors.topMargin: 60
-        color: mainPanel.globalColor
+        color: skinManager.textColor
         text: musicPlayer.title
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
@@ -96,11 +97,10 @@ Rectangle {
         anchors.right: title.right
         anchors.top: title.bottom
         anchors.topMargin: 8
-        color: Qt.darker(title.color, 1.4)
+        color: Qt.darker(title.color, 1.2)
         text: musicPlayer.singer == "" ? "" : qsTr("歌手: ") + musicPlayer.singer
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        font.bold: true
         font.pointSize: 11
     }
 
@@ -115,23 +115,21 @@ Rectangle {
         text: musicPlayer.album == "" ? "" : qsTr("专辑: ") + musicPlayer.album
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        font.bold: true
         font.pointSize: 11
     }
 
     Component {
         id: delegate
 
-        Rectangle {
+        Item {
             width: lyricsView.width
             height: 30
-            color: "#00FFFFFF"
 
             Text {
                 text: lyric
                 font.bold: lyricsView.currentIndex == index ? true : false
                 font.pointSize: lyricsView.currentIndex == index ? 12 : 10
-                color: lyricsView.currentIndex == index ? title.color : Qt.darker(title.color, 1.8)
+                color: lyricsView.currentIndex == index ? title.color : Qt.lighter(title.color, 1.8)
                 anchors.centerIn: parent
             }
         }
@@ -155,7 +153,7 @@ Rectangle {
         currentIndex: musicPlayer.lyricIndex
         highlight: Rectangle{
             height: 30
-            color: "pink"
+            color: skinManager.textColor
             width: lyricsView.width
             opacity: 0.1
             radius: 15

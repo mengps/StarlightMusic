@@ -17,9 +17,7 @@ Window {
     minimumWidth: 750
     minimumHeight: 500
     title: qsTr("StarlightMusic")
-    color: "#000"
-    //需要增加一个全局的SetttingManager
-    property color globalColor: "white"
+    color: skinManager.globalColor
     Component.onCompleted: {
         startAnimation.start();
         menuPanel.display();
@@ -42,7 +40,7 @@ Window {
         anchors.fill: parent
         blur: detailPanel.isVisiable || menuPanel.content.isVisible
         fillMode: Image.PreserveAspectCrop
-        source: "qrc:/image/background.jpg"
+        source: skinManager.backgroundImage
         sourceSize: Qt.size(900, 600)
         focus: true
         Keys.enabled: true
@@ -96,7 +94,6 @@ Window {
         anchors.bottom: parent.bottom
         width: parent.width
         height: 0
-        color: "#88000000"
         onIsVisiableChanged: {
             if (isVisiable) {
                 menuPanel.isVisible = false;
@@ -143,7 +140,7 @@ Window {
         Rectangle {
             anchors.fill: parent
             opacity: 0.5
-            color: "#aaa"
+            color: skinManager.buttonColor
             visible: parent.hovered && !detailPanel.isVisiable
         }
 
@@ -151,7 +148,7 @@ Window {
             anchors.centerIn: parent
             width: 25
             height: 25
-            color: mainPanel.globalColor
+            color: skinManager.buttonColor
             source: "qrc:/image/Player/expand.png"
             visible: parent.hovered && !detailPanel.isVisiable
         }
@@ -174,7 +171,6 @@ Window {
 
     ProgressControlBar {
         id: progressControl
-        backColor: "#aaa"
         anchors.left: playbill.right
         anchors.leftMargin: 12
         anchors.right: timeText.left
@@ -216,7 +212,7 @@ Window {
         anchors.rightMargin: 20
         anchors.top: progressControl.bottom
         anchors.topMargin: 10
-        color: mainPanel.globalColor
+        color: skinManager.textColor
         text: musicPlayer.title == "" ? "" :  musicPlayer.title + " - " + musicPlayer.singer
         font.bold: true
         font.pointSize: 11
@@ -228,7 +224,7 @@ Window {
         anchors.right: parent.right
         anchors.rightMargin: 12
         width: 120
-        color: mainPanel.globalColor
+        color: skinManager.textColor
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         font.pointSize: 12
@@ -247,7 +243,7 @@ Window {
         anchors.topMargin: 8
         width: 34
         height: 34
-        color: mainPanel.globalColor
+        color: skinManager.buttonColor
         state: "pausing"
         states: [
             State {
@@ -315,7 +311,7 @@ Window {
             z: -1
             size: 70
             emitRate: 4
-            source: "qrc:/image/ParticleImage/circle.png"
+            source: skinManager.buttonParticleImage
         }
     }
 
@@ -327,7 +323,7 @@ Window {
         source: "qrc:/image/Player/prev.png"
         width: 22
         height: 22
-        color: mainPanel.globalColor
+        color: skinManager.buttonColor
         toolTip: qsTr("上一首")
         onClicked: musicPlayer.playPrev();
     }
@@ -340,7 +336,7 @@ Window {
         source: "qrc:/image/Player/next.png"
         width: 22
         height: 22
-        color: mainPanel.globalColor
+        color: skinManager.buttonColor
         toolTip: qsTr("下一首")
         onClicked: musicPlayer.playNext();
     }
@@ -359,7 +355,7 @@ Window {
         }
         width: 22
         height: 22
-        color: mainPanel.globalColor
+        color: skinManager.buttonColor
         toolTip: {
             if (musicPlayer.playMode == MusicPlayer.Single)
                 return "单曲循环";
@@ -382,7 +378,7 @@ Window {
         source: "qrc:/image/Player/volume.png"
         width: 22
         height: 22
-        color: mainPanel.globalColor
+        color: skinManager.buttonColor
         toolTip: qsTr("音量调节")
         onClicked: {
             if (!mute) {
@@ -416,7 +412,6 @@ Window {
         width: 100
         height: 20
         value: 100
-        handleColor: mainPanel.globalColor
         text: qsTr("当前音量 : ") + value
         onValueChanged: {
             if (value == 0) volumeButton.setMute();

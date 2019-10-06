@@ -9,8 +9,8 @@ ToolTip
     opacity: 0
     background: Rectangle {
         radius: 4
-        color: "#CCFFFFFF"
-        border.color: "#888"
+        color: skinManager.tooltipColor
+        border.color: skinManager.tooltipBorderColor
         border.width: 1
     }
 

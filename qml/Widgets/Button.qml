@@ -22,8 +22,8 @@ Widgets.ColorImage {
         width: Math.max(root.width, root.height) + 14
         height: width
         radius: height
+        color: skinManager.buttonBackColor
         opacity: 0.4
-        color: "#ccc"
         visible: root.hovered
     }
 

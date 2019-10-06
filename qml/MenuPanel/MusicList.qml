@@ -6,8 +6,6 @@ import "../Widgets" as Widgets
 
 Item {
     id: root
-    property color headerColor: "#55FFFFFF"
-    property color headerBorderColor: "#FFF"
 
     Row {
         id: headerItem
@@ -19,13 +17,15 @@ Item {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color:  root.headerColor
-            border.color: root.headerBorderColor
+            color: hovered ? skinManager.headerHoverColor : skinManager.headerColor
+            border.color: skinManager.headerBorderColor
             radius: 4
+            property bool hovered: false
 
             Text {
                 anchors.centerIn: parent
                 font.pointSize: 12
+                color: skinManager.musicTextColor
                 text: qsTr("歌曲")
             }
 
@@ -43,11 +43,11 @@ Item {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(root.headerColor, 1.4);
+                    parent.hovered = true;
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = root.headerColor;
+                    parent.hovered = false;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
@@ -57,13 +57,15 @@ Item {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color: root.headerColor
-            border.color: root.headerBorderColor
+            color: hovered ? skinManager.headerHoverColor : skinManager.headerColor
+            border.color: skinManager.headerBorderColor
             radius: 4
+            property bool hovered: false
 
             Text {
                 anchors.centerIn: parent
                 font.pointSize: 12
+                color: skinManager.musicTextColor
                 text: qsTr("歌手")
             }
 
@@ -81,11 +83,11 @@ Item {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(root.headerColor, 1.4);
+                    parent.hovered = true;
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = root.headerColor;
+                    parent.hovered = false;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
@@ -95,13 +97,15 @@ Item {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color:  root.headerColor
-            border.color: root.headerBorderColor
+            color: hovered ? skinManager.headerHoverColor : skinManager.headerColor
+            border.color: skinManager.headerBorderColor
             radius: 4
+            property bool hovered: false
 
             Text {
                 anchors.centerIn: parent
                 font.pointSize: 12
+                color: skinManager.musicTextColor
                 text: qsTr("专辑")
             }
 
@@ -119,11 +123,11 @@ Item {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(root.headerColor, 1.4);
+                    parent.hovered = true;
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = root.headerColor;
+                    parent.hovered = false;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
@@ -133,13 +137,15 @@ Item {
             clip: true
             height: 40
             width: parent.width / 4 - parent.spacing
-            color:  root.headerColor
-            border.color: root.headerBorderColor
+            color: hovered ? skinManager.headerHoverColor : skinManager.headerColor
+            border.color: skinManager.headerBorderColor
             radius: 4
+            property bool hovered: false
 
             Text {
                 anchors.centerIn: parent
                 font.pointSize: 12
+                color: skinManager.musicTextColor
                 text: qsTr("时长")
             }
 
@@ -157,11 +163,11 @@ Item {
                     }
                 }
                 onEntered: {
-                    parent.color = Qt.darker(root.headerColor, 1.4);
+                    parent.hovered = true;
                     cursorShape = Qt.PointingHandCursor;
                 }
                 onExited: {
-                    parent.color = root.headerColor;
+                    parent.hovered = false;
                     cursorShape = Qt.ArrowCursor;
                 }
             }
@@ -185,7 +191,7 @@ Item {
                 height: 10
                 radius: 5
                 anchors.verticalCenter: parent.verticalCenter
-                color: modelData == musicPlayer.curMusic ? "#AAFFFFFF" : "transparent"
+                color: modelData == musicPlayer.curMusic ? skinManager.musicTextSelectedColor : "transparent"
             }
 
             MouseArea {
@@ -203,7 +209,7 @@ Item {
                 }
                 onEntered: {
                     parent.hovered = true;
-                    parent.color = root.headerColor;
+                    parent.color = skinManager.headerColor;
                 }
                 onExited: {
                     parent.hovered = false;
@@ -236,6 +242,7 @@ Item {
             FontMetrics {
                 id: fontMetrics
                 font.pointSize: 11
+                font.bold: modelData == musicPlayer.curMusic ? true : false
             }
 
             Item {
@@ -250,8 +257,9 @@ Item {
                     height: 30
                     width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: modelData == musicPlayer.curMusic ? "white" : "black"
+                    color: modelData == musicPlayer.curMusic ? skinManager.musicTextSelectedColor : skinManager.musicTextColor
                     font.pointSize: 11
+                    font.bold: modelData == musicPlayer.curMusic ? true : false
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: fontMetrics.advanceWidth(text) > width ? Text.AlignLeft : Text.AlignHCenter
@@ -271,8 +279,9 @@ Item {
                     height: 30
                     width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: modelData == musicPlayer.curMusic ? "white" : "black"
+                    color: modelData == musicPlayer.curMusic ? skinManager.musicTextSelectedColor : skinManager.musicTextColor
                     font.pointSize: 11
+                    font.bold: modelData == musicPlayer.curMusic ? true : false
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: fontMetrics.advanceWidth(text) > width ? Text.AlignLeft : Text.AlignHCenter
@@ -292,8 +301,9 @@ Item {
                     height: 30
                     width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: modelData == musicPlayer.curMusic ? "white" : "black"
+                    color: modelData == musicPlayer.curMusic ? skinManager.musicTextSelectedColor : skinManager.musicTextColor
                     font.pointSize: 11
+                    font.bold: modelData == musicPlayer.curMusic ? true : false
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: fontMetrics.advanceWidth(text) > width ? Text.AlignLeft : Text.AlignHCenter
@@ -313,8 +323,9 @@ Item {
                     height: 30
                     width: parent.width - 30
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: modelData == musicPlayer.curMusic ? "white" : "black"
+                    color: modelData == musicPlayer.curMusic ? skinManager.musicTextSelectedColor : skinManager.musicTextColor
                     font.pointSize: 11
+                    font.bold: modelData == musicPlayer.curMusic ? true : false
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
                     text: Api.time2string(modelData.duration)

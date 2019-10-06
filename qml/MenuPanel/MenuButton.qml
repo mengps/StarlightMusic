@@ -4,11 +4,11 @@ import "../Widgets" as Widgets
 Item {
     id: root
     clip: true
-    property color color: "white"
     property bool hovered: false
     property alias toolTip: toolTip.text
     property alias source: image.source
     property alias imageColor: image.color
+    property alias hoverColor: hoveredRect.color
 
     signal clicked();
 
@@ -16,7 +16,6 @@ Item {
         id: hoveredRect
         width: root.width
         height: root.height
-        color: root.color
         visible: root.hovered
     }
 

@@ -7,9 +7,6 @@ Item {
     property int minValue: 0
     property int maxValue: 100
     property alias text: toolTip.text
-    property alias backColor: progressBack.color
-    property alias progressColor: progress.color
-    property alias handleColor: handle.color
 
     MouseArea {
         anchors.fill: parent
@@ -22,14 +19,14 @@ Item {
         width: parent.width
         height: 2
         radius: height / 2
-        color: "#CCC"
+        color: skinManager.progressBackColor
 
         Rectangle {
             id: progress
             width: root.value / root.maxValue * parent.width
             height: parent.height
             radius: height / 2
-            color: "#4dffd0"
+            color: skinManager.progressColor
         }
     }
 
@@ -40,6 +37,7 @@ Item {
         width: 14
         height: width
         radius: width / 2
+        color: skinManager.progressHandleColor
         property bool hovered: false
 
         MouseArea {

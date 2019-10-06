@@ -50,10 +50,6 @@ Item {
             alpha: 0.65
             alphaVariation: 0.25
             colorVariation: 0.6
-            /*rotation: 90
-            rotationVariation: 60
-            rotationVelocity: 180
-            rotationVelocityVariation: 90*/
         }
     }
 }

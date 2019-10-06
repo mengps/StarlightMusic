@@ -10,8 +10,6 @@ Item {
     property real menuWidth: 45
     property real menuHeight: 50
     property real contentHeight: 400
-    property color menuColor: "#FFF"
-    property color menuBackColor: "#70AAAAAA"
     property alias menuBack: menuBack
     property alias content: content
 
@@ -77,7 +75,7 @@ Item {
 
     Rectangle {
         id: menuBack
-        color: "#33888888"
+        color: skinManager.menuBackColor
         width: 0
         height: parent.height
     }
@@ -85,7 +83,7 @@ Item {
     Widgets.Button {
         id: openButton
         visible: false
-        color: root.menuColor
+        color: skinManager.menuColor
         x: 20
         anchors.top: closeMenu.top
         width: 30
@@ -102,8 +100,8 @@ Item {
     MenuButton {
         id: closeMenu
         source: "qrc:/image/Player/close.png"
-        color: root.menuBackColor
-        imageColor: root.menuColor
+        hoverColor: skinManager.menuHoverColor
+        imageColor: skinManager.menuColor
         width: 0
         height: parent.menuHeight
         anchors.top: parent.top
@@ -123,11 +121,11 @@ Item {
         width: 0
         height: root.height
         clip: true
-        color: root.menuBackColor
+        color: skinManager.menuHoverColor
         property bool isVisible: false
 
         function display() {
-            if (root.isVisible) {
+            if (root.menuVisible) {
                 isVisible = true;
                 contentAnimation.needStop = true;
                 contentAnimation.to = root.width - root.menuWidth;
@@ -146,7 +144,13 @@ Item {
             running: false
             duration: 500
             easing.type: Easing.InOutQuad
-            onStopped: binder.when = needStop;
+            onStopped: {
+                binder.when = needStop;
+                if (!needStop) {
+                    musicList.visible = false;
+                    skinList.visible = false;
+                }
+            }
             property bool needStop: false
         }
 
@@ -159,6 +163,8 @@ Item {
         }
 
         MusicList {
+            id: musicList
+            visible: false
             anchors.left: parent.left
             anchors.leftMargin: 10
             anchors.right: parent.right
@@ -166,21 +172,39 @@ Item {
             anchors.top: parent.top
             height: root.contentHeight
         }
+
+        SkinList {
+            id: skinList
+            visible: false
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            height: root.contentHeight - 20
+        }
     }
 
     MenuButton {
         id: listMenu
         source: "qrc:/image/Player/content.png"
-        color: root.menuBackColor
-        imageColor: root.menuColor
+        hoverColor: skinManager.menuHoverColor
+        imageColor: skinManager.menuColor
         toolTip: qsTr("播放列表")
         width: 0
         height: parent.menuHeight
         anchors.top: closeMenu.bottom
         onClicked: {
             if (content.isVisible) {
-                content.hide();
+                if (musicList.visible) {
+                    content.hide();
+                } else {
+                    musicList.visible = true;
+                    skinList.visible = false;
+                }
             } else {
+                musicList.visible = true;
                 content.display();
             }
         }
@@ -189,8 +213,8 @@ Item {
     MenuButton {
         id: historyMenu
         source: "qrc:/image/Player/history.png"
-        color: root.menuBackColor
-        imageColor: root.menuColor
+        hoverColor: skinManager.menuHoverColor
+        imageColor: skinManager.menuColor
         toolTip: qsTr("历史播放记录")
         width: 0
         height: parent.menuHeight
@@ -200,11 +224,24 @@ Item {
     MenuButton {
         id: skinMenu
         source: "qrc:/image/Player/skin.png"
-        color: root.menuBackColor
-        imageColor: root.menuColor
+        hoverColor: skinManager.menuHoverColor
+        imageColor: skinManager.menuColor
         toolTip: qsTr("更换皮肤")
         width: 0
         height: parent.menuHeight
         anchors.top: historyMenu.bottom
+        onClicked: {
+            if (content.isVisible) {
+                if (skinList.visible) {
+                    content.hide();
+                } else {
+                    musicList.visible = false;
+                    skinList.visible = true;
+                }
+            } else {
+                skinList.visible = true;
+                content.display();
+            }
+        }
     }
 }

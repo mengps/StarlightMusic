@@ -11,7 +11,7 @@ Menu {
         radius: 5
         implicitWidth: 104
         implicitHeight: 106
-        color: "#F9FCFE"
+        color: skinManager.menuBackColor
     }
     enter: Transition {
         NumberAnimation {
@@ -39,12 +39,13 @@ Menu {
                 width: root.width
                 height: 30
                 radius: 2
-                border.color: "#DDD"
-                color: hovered ? "#9EF2FA" : "#F9FCFE"
+                border.color: skinManager.borderColor
+                color: hovered ? skinManager.menuHoverColor : skinManager.menuBackColor
                 property bool hovered: false
 
                 Text {
                     anchors.centerIn: parent
+                    color: skinManager.textColor
                     text: qsTr("顺序循环")
                 }
 
@@ -71,12 +72,13 @@ Menu {
                 width: root.width
                 height: 30
                 radius: 2
-                border.color: "#DDD"
-                color: hovered ? "#9EF2FA" : "#F9FCFE"
+                border.color: skinManager.borderColor
+                color: hovered ? skinManager.menuHoverColor : skinManager.menuBackColor
                 property bool hovered: false
 
                 Text {
                     anchors.centerIn: parent
+                    color: skinManager.textColor
                     text: qsTr("单曲循环")
                 }
 
@@ -103,12 +105,13 @@ Menu {
                 width: root.width
                 height: 30
                 radius: 2
-                border.color: "#DDD"
-                color: hovered ? "#9EF2FA" : "#F9FCFE"
+                border.color: skinManager.borderColor
+                color: hovered ? skinManager.menuHoverColor : skinManager.menuBackColor
                 property bool hovered: false
 
                 Text {
                     anchors.centerIn: parent
+                    color: skinManager.textColor
                     text: qsTr("随机循环")
                 }
 

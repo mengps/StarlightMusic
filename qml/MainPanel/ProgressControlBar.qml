@@ -13,7 +13,6 @@ Item {
     property alias handle: handle
     property alias effect: effect
     property alias progressBack: progressBack
-    property alias backColor: progressBack.color
     readonly property real minValue: 0.0
     readonly property real maxValue: 1.0
     onWidthChanged: handle.x = value * width - handle.width / 2;
@@ -42,13 +41,13 @@ Item {
         width: parent.width
         height: 2
         radius: height / 2
-        color: "#CCC"
+        color: skinManager.progressBackColor
 
         Rectangle {
             id: progress
             height: parent.height
             radius: height / 2
-            color: "#4dffd0"
+            color: skinManager.progressColor
         }
     }
 
@@ -56,7 +55,7 @@ Item {
         id: effect
         width: 0
         height: parent.height
-        source: "qrc:/image/ParticleImage/star.png"
+        source: skinManager.progressParticleImage
         emitRate: 0
 
         Timer {
@@ -74,8 +73,8 @@ Item {
     Widgets.ColorImage {
         id: handle
         x: -width / 2
-        color: "yellow"
-        source: "qrc:/image/handle.png"
+        color: skinManager.progressHandleColor
+        source: skinManager.progressHandleImage
         anchors.verticalCenter: parent.verticalCenter
         visible: false
         width: 24
