@@ -18,9 +18,22 @@ Window {
     minimumHeight: 500
     title: qsTr("StarlightMusic")
     color: skinManager.globalColor
+    onClosing: hide();
+    property var systemTray: undefined;
+
     Component.onCompleted: {
         startAnimation.start();
         menuPanel.display();
+        var component = Qt.createComponent("MainPanel/SystemTray.qml");
+        var incubator = component.incubateObject(systemTray);
+        if (incubator.status !== Component.Ready) {
+            incubator.onStatusChanged = function(status) {
+                if (status === Component.Ready) {
+                    mainPanel.systemTray = incubator.object;
+                    mainPanel.systemTray.show();
+                }
+            }
+        }
     }
 
     NumberAnimation {

@@ -25,5 +25,6 @@
         <file>image/Player/single.png</file>
         <file>image/skinSelected.png</file>
         <file>image/Player/add.png</file>
+        <file>image/icon.png</file>
     </qresource>
 </RCC>
