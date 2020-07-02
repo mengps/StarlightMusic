@@ -1,0 +1,4 @@
+src/*.h linguist-language=C++
+src/*.c linguist-language=C++
+src/*.cpp linguist-language=C++
+qml/*.qml linguist-language=QML
