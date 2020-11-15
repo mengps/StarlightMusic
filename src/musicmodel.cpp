@@ -1,12 +1,13 @@
+#include "audiodecoder.h"
 #include "musicmodel.h"
+
+#include <QtConcurrentRun>
 #include <QFileInfo>
 
 extern "C"
 {
 #include <libavformat/avformat.h>
 }
-
-static AVFormatContext *avformart = nullptr;
 
 MusicData::MusicData(const QUrl &filename, QObject *parent)
     : QObject (parent)
@@ -40,36 +41,12 @@ QUrl MusicData::filename() const
     return m_filename;
 }
 
-MusicData* MusicData::create(const QUrl &filename, QObject *parent)
+void MusicData::create()
 {
-    int ret = avformat_open_input(&avformart, filename.toLocalFile().toStdString().c_str(), nullptr, nullptr);
-
-    if (ret != 0) {
-        avformat_close_input(&avformart);
-        return nullptr;
-    }
-
-    MusicData *data = new MusicData(filename, parent);
-    AVDictionaryEntry *title = av_dict_get(avformart->metadata, "title", nullptr, AV_DICT_MATCH_CASE);
-    AVDictionaryEntry *artist = av_dict_get(avformart->metadata, "artist", nullptr, AV_DICT_MATCH_CASE);
-    AVDictionaryEntry *album = av_dict_get(avformart->metadata, "album", nullptr, AV_DICT_MATCH_CASE);
-    if (album) data->m_album = album->value;
-    if (artist) data->m_singer = artist->value;
-    if (title) data->m_title = title->value;
-    else data->m_title = QFileInfo(filename.toLocalFile()).baseName();
-
-    avformat_find_stream_info(avformart, nullptr);
-    int streamIdx = av_find_best_stream(avformart, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-    if (ret < 0) {
-        data->m_duration = 0.0;
-    } else {
-        AVStream *stream = avformart->streams[streamIdx];
-        data->m_duration = stream->duration * av_q2d(stream->time_base);
-    }
-
-    avformat_close_input(&avformart);
-
-    return data;
+    QtConcurrent::run([this]{
+        AudioDecoder::getAudioInfo(this);
+        emit created();
+    });
 }
 
 MusicModel::MusicModel(QObject *parent)
