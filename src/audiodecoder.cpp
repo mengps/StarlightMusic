@@ -1,11 +1,13 @@
 #include "audiodecoder.h"
 #include "bufferqueue.h"
+#include "musicmodel.h"
 
 #include <QDebug>
 #include <QFileInfo>
 #include <QImage>
 #include <QMutex>
 #include <QQueue>
+#include <QUrl>
 
 extern "C"
 {
@@ -68,12 +70,12 @@ public:
     {
         AVSampleFormat type;
         switch (format) {
-            case QAudioFormat::Float:
+        case QAudioFormat::Float:
             type = AV_SAMPLE_FMT_FLT;
             break;
 
-            default:
-            case QAudioFormat::SignedInt:
+        default:
+        case QAudioFormat::SignedInt:
             type = AV_SAMPLE_FMT_S32;
             break;
         }
@@ -109,6 +111,7 @@ bool AudioDecoderPrivate::resolve()
 
     //打印相关信息
     av_dump_format(m_formatContext, 0, "format_information", 0);
+    fflush(stderr);
 
     QAudioFormat format;
     format.setCodec("audio/pcm");
@@ -117,7 +120,7 @@ bool AudioDecoderPrivate::resolve()
     if (m_audioCodecContext->sample_fmt == AV_SAMPLE_FMT_FLT) {
         format.setSampleType(QAudioFormat::Float);
         format.setSampleSize(8 * av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT));
-    }else {
+    } else {
         format.setSampleType(QAudioFormat::SignedInt);
         format.setSampleSize(8 * av_get_bytes_per_sample(AV_SAMPLE_FMT_S32));
     }
@@ -177,6 +180,36 @@ AudioDecoder::~AudioDecoder()
     stop();
     d->cleanup();
     delete d;
+}
+
+void AudioDecoder::getAudioInfo(MusicData *data)
+{
+    AVFormatContext *avformart = nullptr;
+    int ret = avformat_open_input(&avformart, data->m_filename.toLocalFile().toStdString().c_str(), nullptr, nullptr);
+
+    if (ret != 0) {
+        avformat_close_input(&avformart);
+        return;
+    }
+
+    AVDictionaryEntry *title = av_dict_get(avformart->metadata, "title", nullptr, AV_DICT_MATCH_CASE);
+    AVDictionaryEntry *artist = av_dict_get(avformart->metadata, "artist", nullptr, AV_DICT_MATCH_CASE);
+    AVDictionaryEntry *album = av_dict_get(avformart->metadata, "album", nullptr, AV_DICT_MATCH_CASE);
+    if (album) data->m_album = album->value;
+    if (artist) data->m_singer = artist->value;
+    if (title) data->m_title = title->value;
+    else data->m_title = QFileInfo(data->m_filename.toLocalFile()).baseName();
+
+    avformat_find_stream_info(avformart, nullptr);
+    int streamIdx = av_find_best_stream(avformart, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (ret < 0) {
+        data->m_duration = 0.0;
+    } else {
+        AVStream *stream = avformart->streams[streamIdx];
+        data->m_duration = stream->duration * av_q2d(stream->time_base);
+    }
+
+    avformat_close_input(&avformart);
 }
 
 void AudioDecoder::stop()
@@ -260,14 +293,20 @@ AudioPacket AudioDecoder::currentPacket()
 void AudioDecoder::run()
 {
     //读取下一帧
-    AVSampleFormat fmt = d->converSampleFormat(d->m_format.sampleType());
-    while (d->m_runnable && (av_read_frame(d->m_formatContext, d->m_packet) >= 0)) {
+    while (d->m_runnable) {
+
+        d->m_mutex.lock();
+        AVSampleFormat fmt = d->converSampleFormat(d->m_format.sampleType());
+        int readRet = av_read_frame(d->m_formatContext, d->m_packet);
+        d->m_mutex.unlock();
+
+        if (readRet < 0) return;
 
         if (d->m_packet->stream_index == d->m_audioIndex) {
             //发送给解码器
             int ret = avcodec_send_packet(d->m_audioCodecContext, d->m_packet);
 
-            QByteArray data;
+
             while (ret >= 0) {
                 //从解码器接收解码后的帧
                 ret = avcodec_receive_frame(d->m_audioCodecContext, d->m_frame);
@@ -275,6 +314,7 @@ void AudioDecoder::run()
                 if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
                 else if (ret < 0) return;
 
+                QByteArray data;
                 int size = av_samples_get_buffer_size(nullptr, d->m_frame->channels, d->m_frame->nb_samples, fmt, 0);
                 uint8_t *buf = new uint8_t[size];
                 swr_convert(d->m_swrContext, &buf, d->m_frame->nb_samples, const_cast<const uint8_t**>(d->m_frame->data), d->m_frame->nb_samples);
