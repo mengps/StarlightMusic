@@ -1,4 +1,4 @@
-QT += quick multimedia
+QT += quick multimedia concurrent
 
 CONFIG += c++11 debug_and_release
 

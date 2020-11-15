@@ -1,5 +1,5 @@
-#ifndef API_H
-#define API_H
+#ifndef FILEAPI_H
+#define FILEAPI_H
 
 #include <QObject>
 
