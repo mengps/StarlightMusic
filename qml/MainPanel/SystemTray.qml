@@ -15,6 +15,7 @@ SystemTrayIcon {
         switch (reason)
         {
         case SystemTrayIcon.DoubleClick:
+            mainPanel.requestActivate();
             mainPanel.show();
             break;
         }

@@ -200,10 +200,12 @@ Item {
                 if (musicList.visible) {
                     content.hide();
                 } else {
-                    musicList.visible = true;
                     skinList.visible = false;
+                    musicList.visible = true;
+
                 }
             } else {
+                skinList.visible = false;
                 musicList.visible = true;
                 content.display();
             }
@@ -239,6 +241,7 @@ Item {
                     skinList.visible = true;
                 }
             } else {
+                musicList.visible = false;
                 skinList.visible = true;
                 content.display();
             }

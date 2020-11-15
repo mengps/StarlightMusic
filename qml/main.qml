@@ -12,6 +12,7 @@ import "MainPanel"
 Window {
     id: mainPanel
     visible: true
+    opacity: 0
     width: 750
     height: 500
     minimumWidth: 750

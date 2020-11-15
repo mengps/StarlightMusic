@@ -31,8 +31,14 @@ Item {
             root.pressedChanged();
             effectTimer.triggered();
         }
-        onEntered: handle.visible = true;
-        onExited: if (!root.pressed) handle.visible = false;
+        onEntered: {
+            cursorShape = Qt.PointingHandCursor;
+            handle.visible = true;
+        }
+        onExited: {
+            cursorShape = Qt.ArrowCursor;
+            if (!root.pressed) handle.visible = false;
+        }
     }
 
     Rectangle {
