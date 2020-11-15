@@ -17,13 +17,16 @@ class MusicData  : public QObject
 public:
     MusicData(const QUrl &filename = QUrl(), QObject *parent = nullptr);
 
+    void create();
+
     qreal duration() const;
     QString title() const;
     QString singer() const;
     QString album() const;
     QUrl filename() const;
 
-    static MusicData* create(const QUrl &filename, QObject *parent = nullptr);
+signals:
+    void created();
 
 private:
     qreal m_duration = 0.0;
@@ -33,6 +36,7 @@ private:
     QUrl m_filename = QUrl();
 
     friend class MusicModel;
+    friend class AudioDecoder;
 };
 
 class MusicModel : public QObject
