@@ -37,7 +37,7 @@ public:
     bool m_playing = false;
     bool m_decoding = false;
     MusicPlayer::PlayMode m_playMode = MusicPlayer::PlayMode::Order;
-    MusicData* m_curMusic = nullptr;
+    MusicData *m_curMusic = nullptr;
     QString m_skinName = QString();
     qreal m_progress = 0.0;
     int m_volume = 80;
@@ -78,7 +78,7 @@ void MusicPlayerPrivate::loadLyrics(const QString &lrcFile)
         if (m_lrcDecoder->decode(lrcFile.toLocal8Bit().data())) {
             //创建Model
             QVector<LyricData *> model;
-            lyricPacket packet = m_lrcDecoder->readPacket();
+            LyricPacket packet = m_lrcDecoder->readPacket();
             while (!packet.isEmpty()) {
                 LyricData *data = new LyricData(QString::fromStdString(packet.lyric), packet.pts);
                 model.append(data);
@@ -120,7 +120,10 @@ MusicPlayer::MusicPlayer(QObject *parent)
         d->m_decoding = true;        
         emit playingChanged();
 
+        auto format = d->m_decoder->format();
         d->m_audioOutput.reset(new QAudioOutput(d->m_decoder->format()));
+        //发现SQ品质码率较高，导致缓冲区不够
+        d->m_audioOutput->setBufferSize(format.sampleRate() * format.sampleSize() / 8);
         d->m_audioDevice = d->m_audioOutput->start();
         d->m_audioOutput->setVolume(d->m_volume / qreal(100.0));
         d->m_playTimer->start(100);
@@ -150,8 +153,8 @@ qreal MusicPlayer::progress() const
 
 void MusicPlayer::setProgress(qreal ratio)
 {
-    if (d->m_decoding && qAbs(ratio - d->m_progress) > 0.0000001) {
-        if (d->m_progress > 0.9999999){
+    if (d->m_decoding && !qFuzzyIsNull(qAbs(ratio - d->m_progress))) {
+        if (qFuzzyCompare(d->m_progress, 1.0000000)){
             emit finished();
         }
         d->m_progress = ratio;
@@ -382,20 +385,20 @@ void MusicPlayer::addMusicList(const QList<QUrl> &urls)
             if (d->contains(filename)) {
                 continue;
             } else {
-                MusicData *data = MusicData::create(url, this);
-                if (data) {
+                MusicData *data = new MusicData(url, this);
+                connect(data, &MusicData::created, this, [&init, this, data] {
                     if (!init) {
                         init = true;
                         setCurMusic(data);
                         play(data->filename());
                     }
                     d->m_musicModel->append(data);
-                }
+                    emit d->m_musicModel->modelChanged();
+                });
+                data->create();
             }
         }
     }
-
-    emit d->m_musicModel->modelChanged();
 }
 
 void MusicPlayer::update()
@@ -404,7 +407,7 @@ void MusicPlayer::update()
         AudioPacket packet = d->m_decoder->currentPacket();
         QByteArray data = packet.data;
         qreal currentTime = packet.time;
-        if (currentTime >= duration() || (data.isEmpty() && currentTime < 0.00000001)) {
+        if (currentTime >= duration() || (data.isEmpty() && qFuzzyIsNull(currentTime))) {
             d->m_progress = 1.0;
             d->m_playing = false;
             d->m_decoding = false;
@@ -449,6 +452,7 @@ void MusicPlayer::readSettings()
         d->m_settings->beginGroup("MusicPlayer");
         setSkinName(d->m_settings->value("SkinName", ":/skin/default_black.skin").toString());
         QUrl curMusic = d->m_settings->value("CurMusic").toUrl();
+        setPlayMode(PlayMode(d->m_settings->value("PlayMode").toInt()));
         int size = d->m_settings->beginReadArray("MusicList");
         QList<QUrl> musiclist;
         for (int i = 0; i < size; i++) {
@@ -461,17 +465,18 @@ void MusicPlayer::readSettings()
                 if (d->contains(filename)) {
                     continue;
                 } else {
-                    MusicData *data = MusicData::create(url, this);
-                    if (data) {
+                    MusicData *data = new MusicData(url, this);
+                    connect(data, &MusicData::created, this, [url, curMusic, this, data] {
                         d->m_musicModel->append(data);
                         if (url == curMusic) {
                             setCurMusic(data);
                         }
-                    }
+                        emit d->m_musicModel->modelChanged();
+                    }, Qt::QueuedConnection);
+                    data->create();
                 }
             }
         }
-        emit d->m_musicModel->modelChanged();
         d->m_settings->endArray();
         d->m_settings->endGroup();
     }
@@ -483,6 +488,7 @@ void MusicPlayer::writeSettings()
         d->m_settings->beginGroup("MusicPlayer");
         d->m_settings->setValue("SkinName", d->m_skinName);
         if (d->m_curMusic) d->m_settings->setValue("CurMusic", d->m_curMusic->filename());
+        d->m_settings->setValue("PlayMode", int(d->m_playMode));
         d->m_settings->beginWriteArray("MusicList");
         for (int i = 0; i < d->m_musicModel->count(); i++) {
            d->m_settings->setArrayIndex(i);
