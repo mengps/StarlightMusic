@@ -64,7 +64,7 @@ public:
     //缓冲队列
     BufferQueue<AudioPacket> m_bufferQueue;
 
-    bool openCodecContext(AVMediaType type, AVFormatContext *&formatCtx, AVCodecContext * &codecCtx, int *stream_index);
+    bool openCodecContext(AVMediaType type, AVFormatContext *&formatCtx, AVCodecContext *&codecCtx, int *stream_index);
 
     AVSampleFormat converSampleFormat(QAudioFormat::SampleType format)
     {
@@ -182,7 +182,7 @@ AudioDecoder::~AudioDecoder()
     delete d;
 }
 
-void AudioDecoder::getAudioInfo(MusicData *data)
+void AudioDecoder::getAudioInfo(AudioData *data)
 {
     AVFormatContext *avformart = nullptr;
     int ret = avformat_open_input(&avformart, data->m_filename.toLocalFile().toStdString().c_str(), nullptr, nullptr);
@@ -227,16 +227,9 @@ void AudioDecoder::open(const QString &filename)
     d->m_mutex.lock();
     d->m_filename = filename;
     d->cleanup();
-    bool success = d->resolve();
     d->m_mutex.unlock();
 
-    if (!success) {
-        emit error(d->m_lastError);
-        return;
-    } else {
-        start();
-        emit resolved();
-    }
+    start();
 }
 
 void AudioDecoder::setProgress(qreal ratio)
@@ -292,20 +285,24 @@ AudioPacket AudioDecoder::currentPacket()
 
 void AudioDecoder::run()
 {
+    if (!d->resolve()) {
+        emit error(d->m_lastError);
+        return;
+    } else {
+        emit resolved();
+    }
+
+    AVSampleFormat fmt = d->converSampleFormat(d->m_format.sampleType());
+
     //读取下一帧
     while (d->m_runnable) {
-
-        d->m_mutex.lock();
-        AVSampleFormat fmt = d->converSampleFormat(d->m_format.sampleType());
         int readRet = av_read_frame(d->m_formatContext, d->m_packet);
-        d->m_mutex.unlock();
 
         if (readRet < 0) return;
 
         if (d->m_packet->stream_index == d->m_audioIndex) {
             //发送给解码器
             int ret = avcodec_send_packet(d->m_audioCodecContext, d->m_packet);
-
 
             while (ret >= 0) {
                 //从解码器接收解码后的帧
@@ -362,7 +359,7 @@ void AudioDecoder::run()
     }
 }
 
-bool AudioDecoderPrivate::openCodecContext(AVMediaType type, AVFormatContext * &formatCtx, AVCodecContext * &codecCtx, int *stream_index)
+bool AudioDecoderPrivate::openCodecContext(AVMediaType type, AVFormatContext *&formatCtx, AVCodecContext *&codecCtx, int *stream_index)
 {
     //找到流的索引
     int ret = av_find_best_stream(formatCtx, type, -1, -1, nullptr, 0);
