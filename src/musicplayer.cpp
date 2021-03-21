@@ -37,13 +37,13 @@ public:
     bool m_playing = false;
     bool m_decoding = false;
     MusicPlayer::PlayMode m_playMode = MusicPlayer::PlayMode::Order;
-    MusicData *m_curMusic = nullptr;
+    AudioData *m_curMusic = nullptr;
     QString m_skinName = QString();
     qreal m_progress = 0.0;
     int m_volume = 80;
     QByteArray m_audioBuffer = QByteArray();
     QTimer *m_playTimer = nullptr;
-    QScopedPointer<QAudioOutput> m_audioOutput;
+    QAudioOutput *m_audioOutput = nullptr;
     QIODevice *m_audioDevice = nullptr;
     AudioDecoder *m_decoder = nullptr;
 
@@ -121,7 +121,8 @@ MusicPlayer::MusicPlayer(QObject *parent)
         emit playingChanged();
 
         auto format = d->m_decoder->format();
-        d->m_audioOutput.reset(new QAudioOutput(d->m_decoder->format()));
+        d->m_audioOutput->deleteLater();
+        d->m_audioOutput = new QAudioOutput(d->m_decoder->format());
         //发现SQ品质码率较高，导致缓冲区不够
         d->m_audioOutput->setBufferSize(format.sampleRate() * format.sampleSize() / 8);
         d->m_audioDevice = d->m_audioOutput->start();
@@ -249,12 +250,12 @@ MusicModel* MusicPlayer::music() const
     return d->m_musicModel;
 }
 
-MusicData* MusicPlayer::curMusic() const
+AudioData* MusicPlayer::curMusic() const
 {
     return d->m_curMusic;
 }
 
-void MusicPlayer::setCurMusic(MusicData *music)
+void MusicPlayer::setCurMusic(AudioData *music)
 {
     if (d->m_curMusic != music) {
         d->m_curMusic = music;
@@ -345,7 +346,7 @@ void MusicPlayer::playPrev()
         break;
     }
 
-    MusicData *music = d->m_musicModel->at(index);
+    AudioData *music = d->m_musicModel->at(index);
     setCurMusic(music);
     play(music->filename());
 }
@@ -371,7 +372,7 @@ void MusicPlayer::playNext()
         break;
     }
 
-    MusicData *music = d->m_musicModel->at(index);
+    AudioData *music = d->m_musicModel->at(index);
     setCurMusic(music);
     play(music->filename());
 }
@@ -385,8 +386,8 @@ void MusicPlayer::addMusicList(const QList<QUrl> &urls)
             if (d->contains(filename)) {
                 continue;
             } else {
-                MusicData *data = new MusicData(url, this);
-                connect(data, &MusicData::created, this, [&init, this, data] {
+                AudioData *data = new AudioData(url, this);
+                connect(data, &AudioData::created, this, [&init, this, data] {
                     if (!init) {
                         init = true;
                         setCurMusic(data);
@@ -465,8 +466,8 @@ void MusicPlayer::readSettings()
                 if (d->contains(filename)) {
                     continue;
                 } else {
-                    MusicData *data = new MusicData(url, this);
-                    connect(data, &MusicData::created, this, [url, curMusic, this, data] {
+                    AudioData *data = new AudioData(url, this);
+                    connect(data, &AudioData::created, this, [url, curMusic, this, data] {
                         d->m_musicModel->append(data);
                         if (url == curMusic) {
                             setCurMusic(data);
