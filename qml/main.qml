@@ -37,6 +37,12 @@ Window {
         }
     }
 
+    function display() {
+        mainPanel.opacity = 0;
+        mainPanel.visible = true;
+        startAnimation.restart();
+    }
+
     NumberAnimation {
         id: startAnimation
         running: false
