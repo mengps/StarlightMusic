@@ -9,39 +9,39 @@ extern "C"
 #include <libavformat/avformat.h>
 }
 
-MusicData::MusicData(const QUrl &filename, QObject *parent)
+AudioData::AudioData(const QUrl &filename, QObject *parent)
     : QObject (parent)
     , m_filename(filename)
 {
 
 }
 
-qreal MusicData::duration() const
+qreal AudioData::duration() const
 {
     return m_duration;
 }
 
-QString MusicData::title() const
+QString AudioData::title() const
 {
     return m_title;
 }
 
-QString MusicData::singer() const
+QString AudioData::singer() const
 {
     return m_singer;
 }
 
-QString MusicData::album() const
+QString AudioData::album() const
 {
     return m_album;
 }
 
-QUrl MusicData::filename() const
+QUrl AudioData::filename() const
 {
     return m_filename;
 }
 
-void MusicData::create()
+void AudioData::create()
 {
     QtConcurrent::run([this]{
         AudioDecoder::getAudioInfo(this);
@@ -60,44 +60,44 @@ void MusicModel::sort(SortKey key, SortMode mode)
     switch (key) {
     case SortKey::Title:
         if (mode == SortMode::Less) {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_title < d2->m_title;
             });
         } else {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_title > d2->m_title;
             });
         }
         break;
     case SortKey::Duration:
         if (mode == SortMode::Less) {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_duration < d2->m_duration;
             });
         } else {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_duration > d2->m_duration;
             });
         }
         break;
     case SortKey::Singer:
         if (mode == SortMode::Less) {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_singer < d2->m_singer;
             });
         } else {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_singer > d2->m_singer;
             });
         }
         break;
     case SortKey::Album:
         if (mode == SortMode::Less) {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_album < d2->m_album;
             });
         } else {
-            std::sort(m_list.begin(), m_list.end(), [](MusicData *d1, MusicData *d2)->bool {
+            std::sort(m_list.begin(), m_list.end(), [](AudioData *d1, AudioData *d2)->bool {
                 return d1->m_album > d2->m_album;
             });
         }
@@ -107,28 +107,28 @@ void MusicModel::sort(SortKey key, SortMode mode)
     emit modelChanged();
 }
 
-QQmlListProperty<MusicData> MusicModel::model()
+QQmlListProperty<AudioData> MusicModel::model()
 {
-    return QQmlListProperty<MusicData>(this, this,
+    return QQmlListProperty<AudioData>(this, this,
                                        &MusicModel::append,
                                        &MusicModel::count,
                                        &MusicModel::at,
                                        &MusicModel::clear);
 }
 
-void MusicModel::setModel(const QVector<MusicData *> &music)
+void MusicModel::setModel(const QVector<AudioData *> &music)
 {
     m_list.clear();
     m_list = music;
     emit modelChanged();
 }
 
-int MusicModel::indexof(MusicData *const &music)
+int MusicModel::indexof(AudioData *const &music)
 {
     return m_list.indexOf(music);
 }
 
-void MusicModel::append(MusicData *music)
+void MusicModel::append(AudioData *music)
 {
     return m_list.append(music);
 }
@@ -138,7 +138,7 @@ int MusicModel::count() const
     return m_list.count();
 }
 
-MusicData* MusicModel::at(int index)
+AudioData* MusicModel::at(int index)
 {
     return m_list.at(index);
 }
@@ -149,22 +149,22 @@ void MusicModel::clear()
     return m_list.clear();
 }
 
-void MusicModel::append(QQmlListProperty<MusicData> *list, MusicData *music)
+void MusicModel::append(QQmlListProperty<AudioData> *list, AudioData *music)
 {
     return reinterpret_cast<MusicModel*>(list->data)->append(music);
 }
 
-int MusicModel::count(QQmlListProperty<MusicData> *list)
+int MusicModel::count(QQmlListProperty<AudioData> *list)
 {
     return reinterpret_cast<MusicModel*>(list->data)->count();
 }
 
-MusicData* MusicModel::at(QQmlListProperty<MusicData> *list, int index)
+AudioData* MusicModel::at(QQmlListProperty<AudioData> *list, int index)
 {
     return reinterpret_cast<MusicModel*>(list->data)->at(index);
 }
 
-void MusicModel::clear(QQmlListProperty<MusicData> *list)
+void MusicModel::clear(QQmlListProperty<AudioData> *list)
 {
     return reinterpret_cast<MusicModel*>(list->data)->clear();
 }

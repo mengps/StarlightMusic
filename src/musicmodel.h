@@ -4,7 +4,7 @@
 #include <QQmlListProperty>
 #include <QUrl>
 
-class MusicData  : public QObject
+class AudioData  : public QObject
 {
     Q_OBJECT
 
@@ -15,7 +15,7 @@ class MusicData  : public QObject
     Q_PROPERTY(QUrl filename READ filename CONSTANT)
 
 public:
-    MusicData(const QUrl &filename = QUrl(), QObject *parent = nullptr);
+    AudioData(const QUrl &filename = QUrl(), QObject *parent = nullptr);
 
     void create();
 
@@ -44,7 +44,7 @@ class MusicModel : public QObject
     Q_OBJECT
     Q_ENUMS(SortKey)
     Q_ENUMS(SortMode)
-    Q_PROPERTY(QQmlListProperty<MusicData> model READ model NOTIFY modelChanged)
+    Q_PROPERTY(QQmlListProperty<AudioData> model READ model NOTIFY modelChanged)
 
 public: 
     enum class SortKey
@@ -65,25 +65,25 @@ public:
 
     Q_INVOKABLE void sort(SortKey key, SortMode mode);
 
-    QQmlListProperty<MusicData> model();
-    void setModel(const QVector<MusicData *> &music);
-    int indexof(MusicData *const &music);
+    QQmlListProperty<AudioData> model();
+    void setModel(const QVector<AudioData *> &music);
+    int indexof(AudioData *const &music);
 
-    void append(MusicData *music);
+    void append(AudioData *music);
     int count() const;
-    MusicData* at(int index);
+    AudioData* at(int index);
     void clear();
 
 signals:
     void modelChanged();
 
 private:
-    static void append(QQmlListProperty<MusicData> *list, MusicData *music);
-    static int count(QQmlListProperty<MusicData> *list);
-    static MusicData *at(QQmlListProperty<MusicData> *list, int index);
-    static void clear(QQmlListProperty<MusicData> *list);
+    static void append(QQmlListProperty<AudioData> *list, AudioData *music);
+    static int count(QQmlListProperty<AudioData> *list);
+    static AudioData *at(QQmlListProperty<AudioData> *list, int index);
+    static void clear(QQmlListProperty<AudioData> *list);
 
-    QVector<MusicData *> m_list;
+    QVector<AudioData *> m_list;
 };
 
 #endif // MUSICMODEL_H

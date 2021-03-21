@@ -10,7 +10,7 @@ typedef struct AudioPacket
     qreal time;
 } AudioPacket;
 
-class MusicData;
+class AudioData;
 class AudioDecoderPrivate;
 class AudioDecoder : public QThread
 {
@@ -24,7 +24,7 @@ public:
      * @brief getAudioInfo
      * @param data
      */
-    static void getAudioInfo(MusicData *data);
+    static void getAudioInfo(AudioData *data);
 
     /**
      * @note is thread-safe

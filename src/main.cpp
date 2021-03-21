@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<LyricData>("an.lyrics.model", 1, 0, "LyricData");
     qmlRegisterType<LyricsModel>("an.lyrics.model", 1, 0, "LyricsModel");
-    qmlRegisterType<MusicData>("an.music.model", 1, 0, "MusicData");
+    qmlRegisterType<AudioData>("an.music.model", 1, 0, "AudioData");
     qmlRegisterType<MusicModel>("an.music.model", 1, 0, "MusicModel");
     qmlRegisterType<MusicPlayer>("an.music", 1, 0, "MusicPlayer");
 

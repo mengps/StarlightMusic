@@ -6,7 +6,7 @@
 
 class ImageProvider;
 class LyricsModel;
-class MusicData;
+class AudioData;
 class MusicModel;
 class MusicPlayerPrivate;
 class MusicPlayer : public QObject
@@ -17,7 +17,7 @@ class MusicPlayer : public QObject
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
     Q_PROPERTY(PlayMode playMode READ playMode WRITE setPlayMode NOTIFY playModeChanged)
-    Q_PROPERTY(MusicData* curMusic READ curMusic WRITE setCurMusic NOTIFY curMusicChanged)
+    Q_PROPERTY(AudioData* curMusic READ curMusic WRITE setCurMusic NOTIFY curMusicChanged)
     Q_PROPERTY(QString skinName READ skinName WRITE setSkinName NOTIFY skinNameChanged)
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
@@ -53,8 +53,8 @@ public:
     PlayMode playMode() const;
     void setPlayMode(PlayMode mode);
 
-    MusicData* curMusic() const;
-    void setCurMusic(MusicData *music);
+    AudioData* curMusic() const;
+    void setCurMusic(AudioData *music);
 
     QString skinName() const;
     void setSkinName(const QString &name);
